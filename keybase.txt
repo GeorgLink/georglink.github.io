@@ -1,0 +1,56 @@
+==================================================================
+https://keybase.io/georglink
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://georg.link
+  * I am georglink (https://keybase.io/georglink) on keybase.
+  * I have a public key ASCgjuCeLTYtUEtXck3W-6KECMkZX9qK2LLnqD-zWiy5Cgo
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "0120a08ee09e2d362d504b57724dd6fba28408c9195fda8ad8b2e7a83fb35a2cb90a0a",
+      "host": "keybase.io",
+      "kid": "0120a08ee09e2d362d504b57724dd6fba28408c9195fda8ad8b2e7a83fb35a2cb90a0a",
+      "uid": "c2381083d2a7351448e1117c50ad2319",
+      "username": "georglink"
+    },
+    "merkle_root": {
+      "ctime": 1526829436,
+      "hash": "206fc077b86f327ce1c86729a86dd3a09a81d56c6d52d9ca1c12da9d3eefa0b7d5a3c7ecae8fe43aafcc8e9d39c1ce0114188282cc7168c0d21118005ccc3f7b",
+      "hash_meta": "f82e273b74c4f1f9286ed56a5890082fb1e19f9a06a9317621eb71a7f883db9d",
+      "seqno": 2837737
+    },
+    "service": {
+      "entropy": "dOStEYy0mJEcEmykPU4AT5X1",
+      "hostname": "georg.link",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 2
+  },
+  "client": {
+    "name": "keybase.io go client",
+    "version": "1.0.48"
+  },
+  "ctime": 1526829450,
+  "expire_in": 504576000,
+  "prev": "2fee0ca284fbe8bf71c38afb4605271cbde5bb54b8564f2d7fb0465d76d15826",
+  "seqno": 8,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+hKRib2R5hqhkZXRhY2hlZMOpaGFzaF90eXBlCqNrZXnEIwEgoI7gni02LVBLV3JN1vuihAjJGV/aitiy56g/s1osuQoKp3BheWxvYWTESpcCCMQgL+4MooT76L9xw4r7RgUnHL3lu1S4Vk8tf7BGXXbRWCbEIBH2RvkfdKvygoi5FIzi1Y9U2RcvkTw/yCdr+cs9fdmgAgHCo3NpZ8RApOQXfrTcfaQER6oMb1KnWq/DIbTWMwnnPxdBNrDfouIRIMvkN73/05AbW+Moakfu83How7rxgwvdv6PmKtoqAahzaWdfdHlwZSCkaGFzaIKkdHlwZQildmFsdWXEIJsYDjFmE2tQGb3rkZofIkqJ1CpV+qcTJ8+ZKNPwwwLqo3RhZ80CAqd2ZXJzaW9uAQ==
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/georglink
+
+==================================================================
