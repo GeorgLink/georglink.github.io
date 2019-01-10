@@ -5,7 +5,7 @@ layout: default
 # Research Participants Wanted
 _IRB # 658-18-EX_
 
-[Next step: schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1)
+<a href="https://goo.gl/forms/EBIDLEfmNO1TkKku1" class="btn btn-primary">Next step: schedule your participation</a>
 
 <h3><em>Appeal to Student</em></h3>
 <img src="/assets/profile.jpg" />
@@ -56,7 +56,7 @@ receive $10 for participating once, $20 total for participating twice,
 and $35 total for participating three times. (2) You can earn an additional $10 based
 on performance. (3) Each time you participate, you also enter in a raffle for
 one of seven additional $50 on top of your participation minimum. Your odds will
-depend on how many participate; we expect 70 participants. **All together, you can 
+depend on how many participate; we expect 70 participants. **All together, you can
 receive up to $95.**
 
 [Next step: schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1)
