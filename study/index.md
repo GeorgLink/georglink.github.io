@@ -51,11 +51,12 @@ sessions you participated in.</p>
 
 ### How much in gift cards do I get in return?
 Your gift card amount will be determined based on your participation,
-performance, and luck: (1) Depending on how often you participate, you will
+performance, and chance: (1) Depending on how often you participate, you will
 receive a minimum for $10 for participating once, $20 for participating twice,
 and $35 for participating three times. (2) You can earn an additional $10 based
 on performance. (3) Each time you participate, you also enter into a raffle for
-one of seven additional $50 on top of your participation minimum.
+one of seven additional $50 on top of your participation minimum. Your odds will
+depend on how many participate; we expect 70 participants.
 
 [Next step: schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1)
 
