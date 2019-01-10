@@ -1,3 +1,6 @@
 title: Participate in Research
-description: Page to recruit participants for my research
-theme: jekyll-theme-leap-day
+logo: /assets/img/logo.png
+description: Please help me by participating.
+show_downloads: false
+google_analytics:
+theme: jekyll-theme-minimal

@@ -1,13 +1,11 @@
-<html>
-<head>
-<title>Study information</title>
-</head>
-<body>
-  <h1>
-  </h1>
-  <p><em>IRB # 658-18-EX</em></p>
+---
+layout: default
+---
 
-  <a href="https://goo.gl/forms/EBIDLEfmNO1TkKku1"> Next step: book your appointments</a>
+# Research Participants Wanted
+_IRB # 658-18-EX_
+
+[Next step: schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1)
 
 <h3><em>Appeal to Student</em></h3>
 <img src="/assets/profile.jpg" />
