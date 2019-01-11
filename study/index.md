@@ -5,6 +5,17 @@ layout: default
 # Research Participants Wanted
 _IRB # 658-18-EX_
 
+## Receive up to $95 for participating!
+
+Participate in up to **three 60-minute sessions** between **Jan 18 - 25**.
+Participate at least once to receive a $10 gift card as a token of our appreciation. Participate multiple times to **receive up to $95**.
+
+You will use a simulated web-based market place. Like playing a game, you will try to earn virtual money. No special skills or background required.
+
+
+For questions, please contact: Georg Link glink@unomaha.edu
+Now, schedule your participation:
+
 <a href="https://goo.gl/forms/EBIDLEfmNO1TkKku1" class="btn btn-primary">Next step: schedule your participation</a>
 
 <h3><em>Appeal to Student</em></h3>
