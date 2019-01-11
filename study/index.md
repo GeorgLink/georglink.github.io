@@ -12,20 +12,19 @@ Participate at least once to receive a $10 gift card as a token of our appreciat
 
 You will use a simulated web-based market place. Like playing a game, you will try to earn virtual money. No special skills or background required.
 
-
 For questions, please contact: Georg Link glink@unomaha.edu
-Now, schedule your participation:
+Now, [schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1):
 
-<a href="https://goo.gl/forms/EBIDLEfmNO1TkKku1" class="btn btn-primary">Next step: schedule your participation</a>
 
 <h3><em>Appeal to Student</em></h3>
-<img src="/assets/profile.jpg" />
 <p><em> Hi, my name is Georg Link and I'm a PhD Candidate at UNO.<br/>
   Today, I call on you to help me out by participating in my experiment.
   As a member of the student body, I have fulfilled an implicit social contract
   by helping other students in their research by participating. I hope that you will
    do the same for me and participate in my study, so that you may find participants
    when you get to do your own study someday.</em></p>
+
+   <img src="/assets/profile.jpg" height="150"/>
 
 [Next step: schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1)
 
