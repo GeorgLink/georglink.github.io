@@ -8,9 +8,16 @@ _IRB # 658-18-EX_
 ## Receive up to $95 for participating!
 
 Participate in up to **three 60-minute sessions** between **Jan 18 - 25**.
-Participate at least once to receive a $10 gift card as a token of our appreciation. Participate multiple times to **receive up to $95**.
 
-You will use a simulated web-based market place. Like playing a game, you will try to earn virtual money. No special skills or background required.
+Participate at least once to receive a $10 gift card as a token of our appreciation.
+
+Participate multiple times to **receive up to $95**.
+
+You will use a simulated web-based market place.
+
+Like playing a game, you will try to earn virtual money.
+
+No special skills or background required.
 
 For questions, please contact: Georg Link glink@unomaha.edu
 Now, [schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1):
