@@ -3,7 +3,7 @@ layout: default
 ---
 
 # Research Participants Wanted
-_IRB # 658-18-EX_
+_IRB # 658-18-EXs_
 
 ## Receive up to $95 for participating!
 
