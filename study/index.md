@@ -16,7 +16,7 @@ Like playing a game, you will try to earn virtual money.<br/>
 No special skills or background required.
 
 For questions, please contact: Georg Link, glink@unomaha.edu<br/>
-Now, [schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1):
+Now, please [schedule your participation](https://goo.gl/forms/EBIDLEfmNO1TkKku1).
 
 
 <h3><em>Appeal to Student</em></h3>
