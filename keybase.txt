@@ -54,3 +54,60 @@ appending to this document.
 View my publicly-auditable identity here: https://keybase.io/georglink
 
 ==================================================================
+
+==================================================================
+https://keybase.io/georglink
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://georg.link
+  * I am georglink (https://keybase.io/georglink) on keybase.
+  * I have a public key ASDahINjUPlhDW0KB1yDWwlkdXm5xIH0-pg6JucrER0gMgo
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "0120a08ee09e2d362d504b57724dd6fba28408c9195fda8ad8b2e7a83fb35a2cb90a0a",
+      "host": "keybase.io",
+      "kid": "0120da84836350f9610d6d0a075c835b09647579b9c481f4fa983a26e72b111d20320a",
+      "uid": "c2381083d2a7351448e1117c50ad2319",
+      "username": "georglink"
+    },
+    "merkle_root": {
+      "ctime": 1570674649,
+      "hash": "93c58d07f42f76903df7ef834e6f2905e72b9c194973768b48c4a8d0e003cc44df7c4ca72c030283468aae3166da57d44bdee07b7be0329972ac37afe6a86dce",
+      "hash_meta": "c8067699e3c5cd6977b919d3e73ea7d668eaeb70eef289bd67079bdaf8d04ffe",
+      "seqno": 7949974
+    },
+    "service": {
+      "entropy": "dRGK+SB0az0/sk1nscI4gngs",
+      "hostname": "georg.link",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 2
+  },
+  "client": {
+    "name": "keybase.io go client",
+    "version": "4.5.0"
+  },
+  "ctime": 1570674655,
+  "expire_in": 504576000,
+  "prev": "88683719f8be45e89149b3055c5b46b64cc8f5bf28ef9c1356efca88dee52c12",
+  "seqno": 39,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+hKRib2R5hqhkZXRhY2hlZMOpaGFzaF90eXBlCqNrZXnEIwEg2oSDY1D5YQ1tCgdcg1sJZHV5ucSB9PqYOibnKxEdIDIKp3BheWxvYWTESpcCJ8QgiGg3Gfi+ReiRSbMFXFtGtkzI9b8o75wTVu/KiN7lLBLEICWUGh5OOcAhybiI/oY26y3bP7izDb6ptZQm9PRL8bO/AgHCo3NpZ8RAMqdCIyrCH8y/XjTULwUMmG35/y/mN22diS6P3P8BVgfm2rZNmf5jP4YjjQF6Mw4fJAQo8+c6HveUwyYPCheyC6hzaWdfdHlwZSCkaGFzaIKkdHlwZQildmFsdWXEIAZlHQwEt/Brwag8UovcUz+9C1Z6cW63XwVQAypoA8V8o3RhZ80CAqd2ZXJzaW9uAQ==
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/georglink
+
+==================================================================
