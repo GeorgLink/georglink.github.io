@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rendity</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:#111827;background:#fff;display:flex;height:100vh;overflow:hidden}
+a{color:inherit;text-decoration:none}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;min-width:240px;height:100vh;background:#fff;border-right:1px solid #E5E7EB;display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100}
+.sidebar-logo{padding:20px 16px 14px;font-size:16px;font-weight:700;color:#3B82F6;border-bottom:1px solid #E5E7EB;letter-spacing:-0.3px}
+.nav-links{flex:1;overflow-y:auto;padding:6px 0}
+.nav-item{display:flex;align-items:center;gap:10px;height:40px;padding:0 16px;cursor:pointer;color:#6B7280;font-size:13px;position:relative;transition:background .1s;user-select:none}
+.nav-item:hover{background:#F0F9FF;color:#111827}
+.nav-item.active{background:#EFF6FF;color:#1D4ED8;font-weight:500}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#3B82F6;border-radius:0 2px 2px 0}
+.nav-item .nav-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-item .nav-icon svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none}
+.nav-item .nav-badge{margin-left:auto;background:#F3F4F6;color:#9CA3AF;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500}
+.nav-section{padding:14px 16px 4px;font-size:10px;font-weight:600;letter-spacing:.08em;color:#9CA3AF;text-transform:uppercase}
+
+/* ── MAIN LAYOUT ── */
+.main-wrapper{margin-left:240px;flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0}
+
+/* ── HEADER ── */
+.header{height:56px;background:#fff;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;position:relative;z-index:50}
+.header-title{font-size:16px;font-weight:500;color:#111827}
+.header-right{display:flex;align-items:center;gap:12px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#3B82F6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+
+/* ── DATE PICKER ── */
+.date-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #D1D5DB;border-radius:20px;background:#fff;cursor:pointer;font-size:13px;color:#374151;user-select:none;white-space:nowrap}
+.date-chip:hover{border-color:#9CA3AF}
+.date-chip .caret{color:#9CA3AF;font-size:10px}
+.dp-wrapper{position:relative}
+.dp-panel{position:absolute;top:calc(100% + 8px);right:0;width:540px;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:200;border:1px solid #E5E7EB;display:none;overflow:hidden}
+.dp-panel.open{display:flex;flex-direction:column}
+.dp-body{display:flex;min-height:260px}
+.dp-presets{width:165px;min-width:165px;border-right:1px solid #E5E7EB;padding:6px 0;overflow-y:auto;max-height:320px}
+.dp-preset-item{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;cursor:pointer;font-size:12px;color:#374151}
+.dp-preset-item:hover{background:#F0F9FF}
+.dp-preset-item.selected{color:#3B82F6;font-weight:500}
+.dp-check{width:12px;color:#3B82F6;font-size:11px}
+.dp-custom{flex:1;padding:14px;overflow-y:auto}
+.dp-custom-section{font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;margin-top:10px}
+.dp-custom-section:first-child{margin-top:0}
+.dp-radio-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.dp-radio-row input[type=radio]{accent-color:#3B82F6;cursor:pointer}
+.dp-radio-row label{font-size:12px;color:#374151;cursor:pointer;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dp-radio-row input[type=number]{width:46px;padding:3px 6px;border:1px solid #D1D5DB;border-radius:4px;font-size:12px;text-align:center}
+.dp-period-pills{display:flex;gap:5px;flex-wrap:wrap}
+.dp-period-pill{padding:3px 9px;border:1px solid #D1D5DB;border-radius:10px;font-size:11px;cursor:pointer;color:#374151}
+.dp-period-pill:hover{border-color:#3B82F6;color:#3B82F6}
+.dp-period-pill.active{background:#3B82F6;border-color:#3B82F6;color:#fff}
+.dp-actions{display:flex;justify-content:flex-end;gap:8px;padding:10px 14px;border-top:1px solid #E5E7EB;background:#FAFAFA}
+.btn-cancel{background:none;border:none;cursor:pointer;font-size:13px;color:#6B7280;padding:6px 12px;border-radius:6px}
+.btn-cancel:hover{background:#F3F4F6}
+.btn-ok{background:#3B82F6;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-size:13px;cursor:pointer;font-weight:500}
+.btn-ok:hover{background:#2563EB}
+
+/* ── PAGE CONTENT ── */
+.page-content{flex:1;overflow-y:auto;padding:24px;background:#fff}
+.stack{display:flex;flex-direction:column;gap:16px}
+
+/* ── CARDS ── */
+.card{background:#F7F8FA;border:1px solid #E5E7EB;border-radius:8px;padding:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:500;color:#111827}
+.card-subtitle{font-size:12px;color:#9CA3AF}
+
+/* ── STAT CARDS ── */
+.stat-card{background:#F7F8FA;border:1px solid #E5E7EB;border-radius:8px;padding:20px;position:relative}
+.stat-card.clickable{cursor:pointer}
+.stat-card.clickable:hover{background:#F0F9FF}
+.stat-label{font-size:12px;color:#6B7280;margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:700;color:#111827;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat-value.sm{font-size:20px}
+.stat-value.pos{color:#10B981}
+.stat-value.neg{color:#EF4444}
+.stat-secondary{font-size:12px;color:#6B7280;margin-top:4px}
+.stat-secondary.pos{color:#10B981}
+.stat-secondary.neg{color:#EF4444}
+.stat-chevron{position:absolute;bottom:14px;right:14px;color:#D1D5DB;font-size:18px}
+
+/* ── GRIDS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+
+/* ── TOGGLE PILLS ── */
+.toggle-group{display:inline-flex;border:1px solid #D1D5DB;border-radius:6px;overflow:hidden}
+.toggle-btn{padding:5px 13px;font-size:12px;cursor:pointer;background:#fff;color:#6B7280;border:none;border-right:1px solid #D1D5DB;transition:all .1s;font-family:inherit}
+.toggle-btn:last-child{border-right:none}
+.toggle-btn.active{background:#3B82F6;color:#fff}
+.toggle-btn:hover:not(.active){background:#F9FAFB;color:#111827}
+
+/* ── VIEW SELECTOR ── */
+.view-selector{display:inline-flex;border:1px solid #D1D5DB;border-radius:6px;overflow:hidden;margin-bottom:16px}
+.view-btn{padding:7px 16px;font-size:13px;cursor:pointer;background:#fff;color:#6B7280;border:none;border-right:1px solid #D1D5DB;transition:all .1s;font-family:inherit}
+.view-btn:last-child{border-right:none}
+.view-btn.active{background:#3B82F6;color:#fff;font-weight:500}
+.view-btn:hover:not(.active){background:#F0F9FF;color:#111827}
+
+/* ── SERIES PILLS ── */
+.series-pills{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #E5E7EB}
+.series-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #D1D5DB;border-radius:12px;font-size:12px;cursor:pointer;background:#fff;user-select:none;transition:all .1s}
+.series-pill.active{color:#fff;border-color:transparent}
+.s-swatch{width:16px;height:4px;border-radius:2px;flex-shrink:0}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #E5E7EB}
+.data-table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.data-table th{text-align:left;padding:9px 12px;font-size:12px;font-weight:500;color:#6B7280;border-bottom:1px solid #E5E7EB;background:#F9FAFB;position:sticky;top:0;z-index:2;cursor:pointer;white-space:nowrap;user-select:none}
+.data-table th:hover{color:#111827}
+.data-table th.sorted{color:#3B82F6}
+.data-table td{padding:9px 12px;border-bottom:1px solid #F3F4F6;vertical-align:middle}
+.data-table tr:hover td{background:#F0F9FF;cursor:pointer}
+.data-table .num{text-align:right}
+.data-table .pos{color:#10B981}
+.data-table .neg{color:#EF4444}
+.data-table .muted{color:#9CA3AF;opacity:.6}
+.data-table tfoot td{padding:9px 12px;font-weight:600;border-top:2px solid #E5E7EB;background:#F9FAFB}
+.table-year-header{background:#F3F4F6 !important;font-weight:600;color:#374151;cursor:pointer}
+.table-year-header:hover{background:#E5E7EB !important}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-buy{background:#DBEAFE;color:#1D4ED8}
+.badge-sell{background:#FEF3C7;color:#B45309}
+.badge-dividend{background:#EDE9FE;color:#6D28D9}
+.badge-premium{background:#FEF3C7;color:#D97706}
+.badge-expiry{background:#F3F4F6;color:#6B7280}
+.badge-exercise{background:#CCFBF1;color:#0F766E}
+.badge-assignment{background:#F0FDF4;color:#15803D}
+.badge-interest{background:#CCFBF1;color:#0F766E}
+
+/* ── METRIC ROWS ── */
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F3F4F6}
+.metric-row:last-child{border-bottom:none}
+.metric-label{font-size:12px;color:#6B7280}
+.metric-value{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.metric-value.pos{color:#10B981}
+.metric-value.neg{color:#EF4444}
+
+/* ── HEATMAP ── */
+.hm-table{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums}
+.hm-table th{padding:3px 2px;font-size:10px;font-weight:500;color:#6B7280;text-align:center}
+.hm-table th.yr{text-align:left;padding-right:4px}
+.hm-table td{padding:2px}
+.hm-cell{display:block;padding:4px 2px;border-radius:3px;text-align:center;min-width:24px}
+.hm-pos{background:#D1FAE5;color:#065F46}
+.hm-neg{background:#FEE2E2;color:#991B1B}
+.hm-strong-pos{background:#10B981;color:#fff}
+.hm-strong-neg{background:#EF4444;color:#fff}
+.hm-neu{background:#F3F4F6;color:#6B7280}
+.hm-empty{color:#D1D5DB}
+
+/* ── CALCULATION SUMMARY TABLE ── */
+.calc-table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.calc-table tr{border-bottom:1px solid #F3F4F6}
+.calc-table td{padding:8px 4px}
+.calc-table td:last-child{text-align:right;font-weight:500}
+.calc-table .total-row td{font-weight:700;border-top:2px solid #E5E7EB;padding-top:10px}
+
+/* ── IRR HEATMAP ROWS ── */
+.irr-row{display:flex;gap:4px;align-items:center;margin-bottom:4px}
+.irr-year{font-size:12px;color:#6B7280;width:36px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.irr-bar{flex:1;border-radius:4px;padding:5px 10px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ── BACK LINK ── */
+.back-link{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#3B82F6;cursor:pointer;margin-bottom:16px}
+.back-link:hover{color:#2563EB;text-decoration:underline}
+
+/* ── IMPORT PAGE ── */
+.upload-zone{border:2px dashed #D1D5DB;border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:all .1s}
+.upload-zone:hover{border-color:#3B82F6;background:#F0F9FF}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5px}
+.form-input{width:100%;padding:7px 11px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;color:#111827;font-family:inherit}
+.form-input:focus{outline:2px solid #3B82F6;outline-offset:0;border-color:#3B82F6}
+.btn-primary{background:#3B82F6;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:500;font-family:inherit}
+.btn-primary:hover{background:#2563EB}
+.divider{border:none;border-top:1px solid #E5E7EB;margin:24px 0}
+.sec-title{font-size:15px;font-weight:600;color:#111827;margin-bottom:4px}
+.sec-desc{font-size:13px;color:#6B7280;margin-bottom:16px;line-height:1.5}
+.status-box{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;padding:12px 14px;font-size:12px;color:#6B7280;margin-top:12px}
+
+/* ── COMPARISON ── */
+.placeholder-card{border:2px dashed #D1D5DB;border-radius:8px;padding:40px 24px;text-align:center}
+.placeholder-title{font-size:18px;font-weight:500;color:#111827;margin:16px 0 10px}
+.placeholder-text{font-size:13px;color:#6B7280;max-width:480px;margin:0 auto 8px;line-height:1.6}
+.blue-link{color:#3B82F6;cursor:pointer;text-decoration:underline}
+
+/* ── BENCHMARK CHIPS ── */
+.benchmark-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.benchmark-chips{display:flex;gap:8px;flex-wrap:wrap}
+.benchmark-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid #E5E7EB;border-radius:14px;font-size:12px;background:#fff;user-select:none}
+.bench-swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.bench-remove{color:#9CA3AF;cursor:pointer;margin-left:2px;font-size:14px;line-height:1}
+.bench-remove:hover{color:#EF4444}
+.btn-add-bench{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1px solid #3B82F6;border-radius:6px;font-size:13px;color:#3B82F6;cursor:pointer;background:#fff;white-space:nowrap;font-family:inherit}
+.btn-add-bench:hover{background:#EFF6FF}
+
+/* ── CHART CONTAINER ── */
+.chart-box{min-height:320px}
+
+/* ── TICKER ── */
+.ticker-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.mono{font-family:'Courier New',monospace;font-weight:700}
+
+/* ── MISC ── */
+.page-hidden{display:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#9CA3AF}
+*:focus-visible{outline:2px solid #3B82F6;outline-offset:2px}
+.mt8{margin-top:8px}
+.mt12{margin-top:12px}
+.mt16{margin-top:16px}
+.mb8{margin-bottom:8px}
+.mb16{margin-bottom:16px}
+.text-sm{font-size:12px}
+.text-muted{color:#6B7280}
+.bold{font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">Rendity</div>
+  <div class="nav-links">
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon"><i data-lucide="home"></i></span>Dashboard</div>
+    <div class="nav-item" data-page="history"><span class="nav-icon"><i data-lucide="trending-up"></i></span>History</div>
+    <div class="nav-item" data-page="holdings"><span class="nav-icon"><i data-lucide="pie-chart"></i></span>Holdings</div>
+    <div class="nav-item" data-page="performance"><span class="nav-icon"><i data-lucide="gauge"></i></span>Performance</div>
+    <div class="nav-item" data-page="earnings"><span class="nav-icon"><i data-lucide="coins"></i></span>Earnings</div>
+    <div class="nav-item" data-page="stocks"><span class="nav-icon"><i data-lucide="table-2"></i></span>Stocks</div>
+    <div class="nav-item" data-page="comparison"><span class="nav-icon"><i data-lucide="bar-chart-2"></i></span>Comparison <span class="nav-badge">Coming soon</span></div>
+    <div class="nav-section">Settings</div>
+    <div class="nav-item" data-page="import"><span class="nav-icon"><i data-lucide="upload"></i></span>Import Data</div>
+    <div class="nav-item" data-page="settings"><span class="nav-icon"><i data-lucide="settings"></i></span>Settings</div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     MAIN WRAPPER
+══════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+  <!-- HEADER -->
+  <header class="header">
+    <span class="header-title" id="headerTitle">Dashboard</span>
+    <div class="header-right">
+      <div class="dp-wrapper">
+        <div class="date-chip" id="dateChipBtn">
+          <span>📅</span>
+          <span id="dateChipLabel">All Time</span>
+          <span class="caret" id="dateCaret">▼</span>
+        </div>
+        <div class="dp-panel" id="dpPanel">
+          <div class="dp-body">
+            <!-- Presets -->
+            <div class="dp-presets" id="dpPresets"></div>
+            <!-- Custom -->
+            <div class="dp-custom">
+              <div class="dp-custom-section">Custom Range</div>
+              <div class="dp-radio-row"><input type="radio" name="dpmode" id="r1" checked><label for="r1">Last <input type="number" value="1" min="1" style="width:40px"> <select style="border:1px solid #D1D5DB;border-radius:4px;font-size:12px;padding:2px 4px"><option>Years</option><option>Months</option></select></label></div>
+              <div class="dp-radio-row"><input type="radio" name="dpmode" id="r2"><label for="r2">Last <input type="number" value="90" min="1" style="width:46px"> Days</label></div>
+              <div class="dp-radio-row"><input type="radio" name="dpmode" id="r4"><label for="r4">From <input type="text" placeholder="MM/DD/YYYY" style="width:96px"> to <input type="text" placeholder="MM/DD/YYYY" style="width:96px"> <span style="font-size:11px;color:#9CA3AF">(excl.)</span></label></div>
+              <div class="dp-radio-row"><input type="radio" name="dpmode" id="r5"><label for="r5">Since <input type="text" placeholder="MM/DD/YYYY" style="width:96px"> <span style="font-size:11px;color:#9CA3AF">(excl.)</span></label></div>
+              <div class="dp-radio-row"><input type="radio" name="dpmode" id="r6"><label for="r6">Year <select style="border:1px solid #D1D5DB;border-radius:4px;font-size:12px;padding:2px 4px"><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option><option>2019</option></select></label></div>
+              <div class="dp-custom-section" style="margin-top:14px">Current Period</div>
+              <div class="dp-period-pills">
+                <div class="dp-period-pill">Week</div>
+                <div class="dp-period-pill">Month</div>
+                <div class="dp-period-pill">Quarter</div>
+                <div class="dp-period-pill">Year</div>
+                <div class="dp-period-pill active">YTD</div>
+              </div>
+              <div class="dp-custom-section" style="margin-top:14px">Previous Period</div>
+              <div class="dp-period-pills">
+                <div class="dp-period-pill">Day</div>
+                <div class="dp-period-pill">Week</div>
+                <div class="dp-period-pill">Month</div>
+                <div class="dp-period-pill">Quarter</div>
+                <div class="dp-period-pill">Year</div>
+              </div>
+            </div>
+          </div>
+          <div class="dp-actions">
+            <button class="btn-cancel" id="dpCancel">Cancel</button>
+            <button class="btn-ok" id="dpOk">OK</button>
+          </div>
+        </div>
+      </div>
+      <div class="avatar">G</div>
+    </div>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <main class="page-content" id="pageContent"></main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  MOCK DATA
+// ═══════════════════════════════════════════════════
+const COLORS = ['#3B82F6','#F59E0B','#10B981','#EF4444','#8B5CF6','#EC4899','#14B8A6','#D97706'];
+
+// Portfolio history (weekly, Mar 2019 – Dec 2024)
+// [date, portfolio_value, net_deposits]
+const HISTORY = (function(){
+  const pts = [
+    ['2019-03-01',10000,10000],['2019-06-01',10900,10000],['2019-09-01',11700,12000],
+    ['2019-12-01',12400,12000],['2020-03-01',8600,14000],['2020-06-01',10500,14000],
+    ['2020-09-01',13200,14000],['2020-12-01',16100,14000],['2021-03-01',19200,16500],
+    ['2021-06-01',21800,16500],['2021-09-01',23500,19000],['2021-12-01',25800,19000],
+    ['2022-03-01',22400,22000],['2022-06-01',17900,24500],['2022-09-01',19100,27000],
+    ['2022-12-01',21200,29000],['2023-03-01',24500,29000],['2023-06-01',28300,31000],
+    ['2023-09-01',31000,33500],['2023-12-01',35600,35000],['2024-03-01',40200,35500],
+    ['2024-06-01',47500,36500],['2024-09-01',53800,37000],['2024-12-01',58967,37410]
+  ];
+  // Interpolate to weekly
+  const result = {dates:[],values:[],deposits:[]};
+  for(let i=0;i<pts.length-1;i++){
+    const [d1,v1,dep1]=pts[i], [d2,v2,dep2]=pts[i+1];
+    const start=new Date(d1), end=new Date(d2);
+    const days=(end-start)/(1000*86400);
+    const steps=Math.round(days/7);
+    for(let s=0;s<steps;s++){
+      const t=s/steps;
+      const nd=new Date(start); nd.setDate(nd.getDate()+s*7);
+      result.dates.push(nd.toISOString().split('T')[0]);
+      // add some noise
+      const noise=(Math.sin(s*2.3+i*7)*0.015+Math.sin(s*0.7+i*3)*0.01);
+      result.values.push(Math.round(v1+(v2-v1)*t*(1+noise)));
+      result.deposits.push(Math.round(dep1+(dep2-dep1)*t));
+    }
+  }
+  result.dates.push('2024-12-01');
+  result.values.push(58967);
+  result.deposits.push(37410);
+  return result;
+})();
+
+const HOLDINGS = [
+  {ticker:'META', name:'Meta Platforms, Inc.',  shares:25,  value:14250, pct:24.16, avgCost:280, color:COLORS[0]},
+  {ticker:'BRK.B',name:'Berkshire Hathaway B',  shares:30,  value:12720, pct:21.57, avgCost:350, color:COLORS[1]},
+  {ticker:'AAPL', name:'Apple Inc.',             shares:50,  value:10650, pct:18.06, avgCost:150, color:COLORS[2]},
+  {ticker:'NVDA', name:'NVIDIA Corporation',     shares:10,  value:8750,  pct:14.84, avgCost:300, color:COLORS[3]},
+  {ticker:'MSFT', name:'Microsoft Corporation',  shares:20,  value:8300,  pct:14.08, avgCost:280, color:COLORS[4]},
+  {ticker:'AMZN', name:'Amazon.com, Inc.',       shares:15,  value:2745,  pct:4.65,  avgCost:120, color:COLORS[5]},
+  {ticker:'CASH', name:'Cash (USD)',             shares:null,value:1552,  pct:2.63,  avgCost:null,color:COLORS[6]},
+];
+
+const TRANSACTIONS = [
+  {date:'2024-11-12',ticker:'META',type:'Sell',   desc:'Sold 5 shares @ $570.20',qty:5,   price:570.20, amount:2851,   fees:2.50,year:2024},
+  {date:'2024-10-03',ticker:'NVDA',type:'Buy',    desc:'Bought 2 shares @ $123.45',qty:2, price:123.45, amount:-247,   fees:1.00,year:2024},
+  {date:'2024-09-15',ticker:'AAPL',type:'Dividend',desc:'Dividend',qty:null,price:null,   amount:47.50, fees:0,year:2024},
+  {date:'2024-08-22',ticker:'AMZN',type:'Option Premium',desc:'Sold 1 AMZN Oct 2024 $185 Call',qty:1,price:null,amount:312.00,fees:0.65,year:2024},
+  {date:'2024-07-18',ticker:'BRK.B',type:'Buy',   desc:'Bought 5 shares @ $424.10',qty:5, price:424.10, amount:-2120,  fees:2.00,year:2024},
+  {date:'2024-06-14',ticker:'MSFT',type:'Dividend',desc:'Dividend',qty:null,price:null,   amount:75.00, fees:0,year:2024},
+  {date:'2024-05-08',ticker:'AMZN',type:'Option Expiry',desc:'AMZN May 2024 $200 Call — expired worthless',qty:1,price:null,amount:0,fees:0.20,year:2024},
+  {date:'2024-03-20',ticker:'NVDA',type:'Buy',    desc:'Bought 3 shares @ $878.35',qty:3, price:878.35, amount:-2635,  fees:1.50,year:2024},
+  {date:'2024-02-09',ticker:'META',type:'Buy',    desc:'Bought 5 shares @ $474.99',qty:5, price:474.99, amount:-2375,  fees:2.00,year:2024},
+  {date:'2023-12-28',ticker:'AAPL',type:'Dividend',desc:'Dividend',qty:null,price:null,   amount:47.50, fees:0,year:2023},
+  {date:'2023-11-14',ticker:'AMZN',type:'Sell',   desc:'Sold 10 shares @ $177.58',qty:10,price:177.58, amount:1776,   fees:2.50,year:2023},
+  {date:'2023-10-02',ticker:'AMZN',type:'Buy',    desc:'Bought 10 shares @ $127.12',qty:10,price:127.12,amount:-1271, fees:2.00,year:2023},
+  {date:'2023-08-11',ticker:'MSFT',type:'Option Premium',desc:'Sold 1 MSFT Sep 2023 $360 Call',qty:1,price:null,amount:185.00,fees:0.65,year:2023},
+  {date:'2023-06-22',ticker:'MSFT',type:'Dividend',desc:'Dividend',qty:null,price:null,   amount:68.00, fees:0,year:2023},
+  {date:'2022-10-05',ticker:'AAPL',type:'Buy',    desc:'Bought 10 shares @ $138.20',qty:10,price:138.20,amount:-1382, fees:2.00,year:2022},
+  {date:'2022-03-15',ticker:'BRK.B',type:'Buy',   desc:'Bought 10 shares @ $359.40',qty:10,price:359.40,amount:-3594, fees:2.50,year:2022},
+  {date:'2021-11-08',ticker:'META',type:'Buy',    desc:'Bought 10 shares @ $331.62',qty:10,price:331.62,amount:-3316, fees:2.00,year:2021},
+  {date:'2021-07-14',ticker:'MSFT',type:'Buy',    desc:'Bought 10 shares @ $284.91',qty:10,price:284.91,amount:-2849, fees:2.00,year:2021},
+  {date:'2020-08-03',ticker:'AAPL',type:'Buy',    desc:'Bought 20 shares @ $95.35',qty:20, price:95.35, amount:-1907, fees:2.00,year:2020},
+  {date:'2020-04-20',ticker:'AMZN',type:'Buy',    desc:'Bought 5 shares @ $2285.22',qty:5,price:2285.22,amount:-11426,fees:5.00,year:2020},
+  {date:'2019-03-15',ticker:'AAPL',type:'Buy',    desc:'Bought 20 shares @ $186.12',qty:20,price:186.12,amount:-3722, fees:3.00,year:2019},
+  {date:'2019-03-15',ticker:'MSFT',type:'Buy',    desc:'Bought 10 shares @ $117.52',qty:10,price:117.52,amount:-1175, fees:2.50,year:2019},
+];
+
+const EARNINGS_BY_YEAR = {
+  2019:{dividends:120,  premiums:0,    interest:18,  gains:0},
+  2020:{dividends:185,  premiums:210,  interest:24,  gains:-420},
+  2021:{dividends:312,  premiums:890,  interest:31,  gains:5200},
+  2022:{dividends:298,  premiums:1240, interest:148, gains:-1800},
+  2023:{dividends:420,  premiums:1680, interest:310, gains:3100},
+  2024:{dividends:512,  premiums:1920, interest:285, gains:6800},
+};
+
+const MONTHLY_EARNINGS = {
+  2019:[0,0,15,22,18,20,14,0,18,10,0,3],
+  2020:[12,0,0,8,22,35,18,40,20,15,12,3],
+  2021:[28,18,34,45,52,38,72,58,46,52,44,75],
+  2022:[48,38,52,44,60,55,70,62,48,58,42,51],
+  2023:[62,54,78,58,72,80,92,68,75,82,60,88],
+  2024:[82,74,95,88,102,108,115,98,105,112,88,115],
+};
+
+const MONTHLY_IRR = {
+  2019:[null,null,1.2,2.3,1.8,-0.5,0.9,1.4,2.1,-0.8,1.2,0.6],
+  2020:[-3.2,-4.1,-23.4,8.2,5.8,4.2,6.1,7.3,-3.2,3.8,10.4,3.7],
+  2021:[2.8,1.4,4.2,5.1,1.2,-1.8,3.4,2.9,-4.7,6.8,-1.2,3.8],
+  2022:[-3.8,-2.1,-4.2,-8.4,-8.8,-8.2,8.4,-3.4,-9.2,7.8,-5.2,-5.8],
+  2023:[5.2,3.8,2.4,1.2,4.8,6.2,3.4,-1.8,2.2,3.8,7.4,4.1],
+  2024:[1.8,4.2,2.8,4.2,-2.8,4.8,1.8,2.4,2.2,3.4,-1.2,3.8],
+};
+
+const ANNUAL_IRR = {2019:8.4,2020:-5.2,2021:32.1,2022:-18.4,2023:29.8,2024:22.4};
+
+const STOCKS_WITH_DATA = [
+  {ticker:'AMZN',name:'Amazon.com, Inc.',       2019:0,    2020:0,     2021:5200, 2022:-420,  2023:3280, 2024:7112, dot:COLORS[5]},
+  {ticker:'AAPL',name:'Apple Inc.',             2019:120,  2020:209,   2021:785,  2022:610,   2023:1042, 2024:1580, dot:COLORS[2]},
+  {ticker:'META',name:'Meta Platforms, Inc.',   2019:0,    2020:0,     2021:0,    2022:-1800, 2023:2840, 2024:5920, dot:COLORS[0]},
+  {ticker:'MSFT',name:'Microsoft Corporation',  2019:0,    2020:210,   2021:485,  2022:608,   2023:1380, 2024:1840, dot:COLORS[4]},
+  {ticker:'BRK.B',name:'Berkshire Hathaway B',  2019:0,    2020:0,     2021:0,    2022:0,     2023:580,  2024:1420, dot:COLORS[1]},
+  {ticker:'NVDA',name:'NVIDIA Corporation',     2019:0,    2020:0,     2021:0,    2022:0,     2023:0,    2024:1480, dot:COLORS[3]},
+];
+
+const STOCK_HOLDING_PERIODS = {
+  AMZN:[{from:'2019-03-15',to:'2020-01-10',shares:10,avgCost:1920},{from:'2020-04-20',to:null,shares:15,avgCost:120}],
+  AAPL:[{from:'2019-03-15',to:null,shares:50,avgCost:150}],
+  META:[{from:'2021-11-08',to:null,shares:25,avgCost:280}],
+  MSFT:[{from:'2019-03-15',to:null,shares:20,avgCost:280}],
+  BRK_B:[{from:'2022-03-15',to:null,shares:30,avgCost:350}],
+  NVDA:[{from:'2024-02-09',to:null,shares:10,avgCost:300}],
+};
+
+// ═══════════════════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════════════════
+function fmt(n,digits=0){if(n==null)return'';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:digits,maximumFractionDigits:digits}).format(n)}
+function fmtAbbr(n){if(n==null)return'';const abs=Math.abs(n);const sign=n<0?'−':'';if(abs>=1e6)return sign+'$'+(abs/1e6).toFixed(1)+'M';if(abs>=1e3)return sign+'$'+(abs/1e3).toFixed(1)+'K';return fmt(n)}
+function fmtPct(n,digits=1){if(n==null)return'';const sign=n>0?'+':'';return sign+n.toFixed(digits)+'%'}
+function colorClass(n){return n>0?'pos':n<0?'neg':''}
+function makeId(){return 'c'+Math.random().toString(36).slice(2,8)}
+
+// ═══════════════════════════════════════════════════
+//  DATE PICKER
+// ═══════════════════════════════════════════════════
+const DP_PRESETS = [
+  'All Time','Year to Date (YTD)','Last 1 Year','Last 2 Years','Last 3 Years',
+  'Previous Year','2024','2023','2022','2021','2020','2019','Custom…','Manage…'
+];
+let currentDateLabel = 'All Time';
+
+function initDatePicker(){
+  const container=document.getElementById('dpPresets');
+  DP_PRESETS.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='dp-preset-item'+(p===currentDateLabel?' selected':'');
+    el.innerHTML=`<span class="dp-check">${p===currentDateLabel?'✓':''}</span>${p}`;
+    if(p==='Manage…')el.style.color='#9CA3AF';
+    el.addEventListener('click',()=>{
+      if(p==='Manage…'||p==='Custom…'){
+        document.querySelectorAll('.dp-preset-item').forEach(x=>{x.classList.remove('selected');x.querySelector('.dp-check').textContent=''});
+        el.classList.add('selected');el.querySelector('.dp-check').textContent='✓';
+        return;
+      }
+      currentDateLabel=p;
+      document.getElementById('dateChipLabel').textContent=p;
+      document.querySelectorAll('.dp-preset-item').forEach(x=>{x.classList.remove('selected');x.querySelector('.dp-check').textContent=''});
+      el.classList.add('selected');el.querySelector('.dp-check').textContent='✓';
+      closeDP();
+    });
+    container.appendChild(el);
+  });
+
+  document.getElementById('dateChipBtn').addEventListener('click',e=>{e.stopPropagation();toggleDP()});
+  document.getElementById('dpCancel').addEventListener('click',closeDP);
+  document.getElementById('dpOk').addEventListener('click',()=>{
+    const sel=document.querySelector('.dp-preset-item.selected');
+    if(sel)document.getElementById('dateChipLabel').textContent=sel.querySelector('.dp-check').nextSibling.textContent.trim();
+    closeDP();
+  });
+  document.addEventListener('click',e=>{if(!e.target.closest('.dp-wrapper'))closeDP()});
+  document.querySelectorAll('.dp-period-pill').forEach(p=>p.addEventListener('click',function(){
+    document.querySelectorAll('.dp-period-pill').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+  }));
+}
+function toggleDP(){const p=document.getElementById('dpPanel');p.classList.toggle('open')}
+function closeDP(){document.getElementById('dpPanel').classList.remove('open')}
+
+function updateDateChipState(page){
+  const chip=document.getElementById('dateChipBtn');
+  if(page==='dashboard'){
+    chip.style.opacity='0.45';
+    chip.style.pointerEvents='none';
+    chip.title='Date range does not apply to this page.';
+  } else {
+    chip.style.opacity='';
+    chip.style.pointerEvents='';
+    chip.title='';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  ROUTER
+// ═══════════════════════════════════════════════════
+const PAGE_TITLES={dashboard:'Dashboard',history:'History',holdings:'Holdings',performance:'Performance',earnings:'Earnings',stocks:'Stocks',comparison:'Comparison','import':'Import Data',settings:'Settings'};
+
+function getRoute(){
+  const h=location.hash.replace('#','');
+  if(h.startsWith('stocks/'))return{page:'stocks',ticker:h.split('/')[1]};
+  return{page:h||'dashboard',ticker:null};
+}
+
+function navigate(page,ticker=null){
+  location.hash=ticker?`stocks/${ticker}`:page;
+}
+
+function render(){
+  const {page,ticker}=getRoute();
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.classList.toggle('active',el.dataset.page===page);
+  });
+  const title=ticker?`${ticker} — ${(HOLDINGS.find(h=>h.ticker===ticker)||{name:ticker}).name}`:PAGE_TITLES[page]||page;
+  document.getElementById('headerTitle').textContent=title;
+  const content=document.getElementById('pageContent');
+  content.innerHTML='';
+
+  switch(page){
+    case'dashboard':   renderDashboard(content); break;
+    case'history':     renderHistory(content);   break;
+    case'holdings':    renderHoldings(content);  break;
+    case'performance': renderPerformance(content);break;
+    case'earnings':    renderEarnings(content);  break;
+    case'stocks':      ticker?renderStockDetail(content,ticker):renderStocksList(content); break;
+    case'comparison':  renderComparison(content);break;
+    case'import':      renderImport(content);    break;
+    case'settings':    renderSettings(content);  break;
+    default:           renderDashboard(content);
+  }
+  updateDateChipState(page);
+  if(typeof lucide!=='undefined') lucide.createIcons();
+}
+
+window.addEventListener('hashchange',render);
+document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
+  el.addEventListener('click',()=>navigate(el.dataset.page));
+});
+
+// ═══════════════════════════════════════════════════
+//  PLOTLY HELPERS
+// ═══════════════════════════════════════════════════
+const PLOTLY_CONFIG={responsive:true,displayModeBar:false};
+// Abbreviated currency Y-axis (shows $15.5K, $1.2M etc.)
+const Y_CURRENCY={tickprefix:'$',tickformat:',.2~s',color:'#9CA3AF',gridcolor:'#E5E7EB',zeroline:false,tickfont:{size:11}};
+const PLOTLY_LAYOUT_BASE={
+  margin:{l:55,r:16,t:8,b:40},
+  paper_bgcolor:'#F7F8FA',
+  plot_bgcolor:'#F7F8FA',
+  font:{family:'system-ui,-apple-system,sans-serif',size:11,color:'#6B7280'},
+  xaxis:{showgrid:false,zeroline:false,color:'#9CA3AF',tickfont:{size:11}},
+  yaxis:{gridcolor:'#E5E7EB',zeroline:false,color:'#9CA3AF',tickfont:{size:11}},
+  hovermode:'x unified',
+  legend:{orientation:'h',x:0,y:-0.18,font:{size:11}},
+  showlegend:false,
+};
+
+// ═══════════════════════════════════════════════════
+//  PAGE: DASHBOARD
+// ═══════════════════════════════════════════════════
+function renderDashboard(el){
+  const totalEarned=21557, totalBalance=58967, netDep=37410;
+  const pct=(totalEarned/netDep*100).toFixed(1);
+  const totalDiv=Object.values(EARNINGS_BY_YEAR).reduce((a,v)=>a+v.dividends,0);
+  const totalPrem=Object.values(EARNINGS_BY_YEAR).reduce((a,v)=>a+v.premiums,0);
+  const totalInt=Object.values(EARNINGS_BY_YEAR).reduce((a,v)=>a+v.interest,0);
+  const totalGains=Object.values(EARNINGS_BY_YEAR).reduce((a,v)=>a+v.gains,0);
+  const chartId=makeId();
+
+  el.innerHTML=`
+  <div class="stack">
+    <div class="grid-2">
+      <div class="stat-card">
+        <div class="stat-label">Total Balance</div>
+        <div class="stat-value">${fmt(totalBalance)}</div>
+        <div class="stat-secondary">as of Dec 1, 2024</div>
+      </div>
+      <div class="stat-card clickable" onclick="navigate('history')">
+        <div class="stat-label">Total Earned</div>
+        <div class="stat-value pos">+${fmt(totalEarned)}</div>
+        <div class="stat-secondary pos">+${pct}% return</div>
+        <div class="stat-secondary">all time, since first transaction</div>
+        <span class="stat-chevron">›</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Portfolio History (All Time)</span>
+        <span class="card-subtitle">Click 'Total Earned' to explore date ranges →</span>
+      </div>
+      <div class="chart-box" id="${chartId}" style="min-height:340px"></div>
+      <div style="display:flex;gap:20px;margin-top:10px;justify-content:center;font-size:12px;color:#6B7280">
+        <span><span style="display:inline-block;width:24px;height:3px;background:#3B82F6;vertical-align:middle;border-radius:2px;margin-right:5px"></span>Balance</span>
+        <span><span style="display:inline-block;width:24px;height:2px;background:#94A3B8;vertical-align:middle;border-radius:2px;margin-right:5px;border-top:1.5px dashed #94A3B8"></span>Net Deposits</span>
+      </div>
+    </div>
+
+    <div class="grid-5">
+      <div class="stat-card clickable" onclick="navigate('performance')">
+        <div class="stat-label">IRR (Annualised)</div>
+        <div class="stat-value sm pos">+14.2%</div>
+        <div class="stat-secondary">all time</div>
+        <span class="stat-chevron" style="font-size:14px">›</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Dividends Received</div>
+        <div class="stat-value sm pos">+${fmt(totalDiv)}</div>
+        <div class="stat-secondary">all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Option Premiums</div>
+        <div class="stat-value sm pos">+${fmt(totalPrem)}</div>
+        <div class="stat-secondary">all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Interest</div>
+        <div class="stat-value sm pos">+${fmt(totalInt)}</div>
+        <div class="stat-secondary">all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Realised Gains</div>
+        <div class="stat-value sm ${totalGains>0?'pos':'neg'}">${totalGains>0?'+':''}${fmt(totalGains)}</div>
+        <div class="stat-secondary">all time</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Plot portfolio history
+  setTimeout(()=>{
+    const d=HISTORY;
+    const earnings=d.values.map((v,i)=>v-d.deposits[i]);
+    Plotly.newPlot(chartId,[
+      {x:d.dates,y:d.deposits,name:'Net Deposits',line:{color:'#94A3B8',dash:'dot',width:2},mode:'lines',fill:'none',hovertemplate:'%{y:$,.0f}<extra>Deposits</extra>'},
+      // fill between balance and deposits
+      {x:d.dates,y:d.values,name:'Balance',line:{color:'#3B82F6',width:2.5},mode:'lines',fill:'tonexty',fillcolor:'rgba(16,185,129,0.12)',hovertemplate:'%{y:$,.0f}<extra>Balance</extra>'},
+    ],{
+      ...PLOTLY_LAYOUT_BASE,
+      margin:{l:65,r:16,t:8,b:40},
+      paper_bgcolor:'#F7F8FA',plot_bgcolor:'#F7F8FA',
+      yaxis:{...Y_CURRENCY},
+      hovermode:'x unified',showlegend:false
+    },PLOTLY_CONFIG);
+  },50);
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: HISTORY
+// ═══════════════════════════════════════════════════
+function renderHistory(el){
+  const chartId=makeId();
+  const seriesDef=[
+    {key:'value',  label:'Total Value',       color:'#3B82F6', dash:'solid',  active:true},
+    {key:'dep',    label:'Invested Capital',  color:'#6B7280', dash:'solid',  active:true},
+    {key:'earn',   label:'Cumulative Earnings',color:'#10B981',dash:'solid',  active:true},
+    {key:'gains',  label:'Price Gains',       color:'#10B981', dash:'dash',   active:false},
+    {key:'div',    label:'Dividends',         color:'#8B5CF6', dash:'dot',    active:false},
+    {key:'prem',   label:'Option Premiums',   color:'#F59E0B', dash:'dashdot',active:false},
+    {key:'int',    label:'Interest',          color:'#14B8A6', dash:'dot',    active:false},
+  ];
+
+  el.innerHTML=`
+  <div class="stack">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Balance & Earnings History</span>
+        <div class="toggle-group">
+          <button class="toggle-btn" onclick="toggleResolution(this,'Daily')">Daily</button>
+          <button class="toggle-btn" onclick="toggleResolution(this,'Weekly')">Weekly</button>
+          <button class="toggle-btn active" onclick="toggleResolution(this,'Monthly')">Monthly</button>
+        </div>
+      </div>
+      <div class="chart-box" id="${chartId}" style="min-height:340px"></div>
+      <div class="series-pills" id="seriesPills${chartId}"></div>
+    </div>
+  </div>`;
+
+  const pillsEl=document.getElementById('seriesPills'+chartId);
+  seriesDef.forEach((s,i)=>{
+    const p=document.createElement('div');
+    p.className='series-pill'+(s.active?' active':'');
+    p.style.background=s.active?s.color:'';
+    p.innerHTML=`<span class="s-swatch" style="background:${s.color}"></span>${s.label}`;
+    p.addEventListener('click',function(){
+      s.active=!s.active;
+      this.classList.toggle('active');
+      this.style.background=s.active?s.color:'';
+      this.style.color=s.active?'#fff':'';
+      renderHistoryChart(chartId,seriesDef);
+    });
+    pillsEl.appendChild(p);
+  });
+
+  setTimeout(()=>renderHistoryChart(chartId,seriesDef),50);
+}
+
+function renderHistoryChart(chartId,seriesDef){
+  const d=HISTORY;
+  const seriesData={
+    value: d.values,
+    dep:   d.deposits,
+    earn:  d.values.map((v,i)=>v-d.deposits[i]),
+    gains: d.values.map((v,i)=>Math.max(0,v-d.deposits[i])*0.72),
+    div:   d.values.map((v,i)=>Math.max(0,v-d.deposits[i])*0.15),
+    prem:  d.values.map((v,i)=>Math.max(0,v-d.deposits[i])*0.18),
+    int:   d.values.map((v,i)=>Math.max(0,v-d.deposits[i])*0.05),
+  };
+  const traces=seriesDef.filter(s=>s.active).map(s=>({
+    x:d.dates, y:seriesData[s.key],
+    name:s.label,
+    line:{color:s.color,dash:s.dash,width:2},
+    mode:'lines',
+    hovertemplate:'%{y:$,.0f}<extra>'+s.label+'</extra>',
+  }));
+  Plotly.newPlot(chartId,traces,{
+    ...PLOTLY_LAYOUT_BASE,
+    margin:{l:65,r:16,t:8,b:40},
+    yaxis:{...Y_CURRENCY},
+    showlegend:false,
+  },PLOTLY_CONFIG);
+}
+
+function toggleResolution(btn,res){
+  btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: HOLDINGS
+// ═══════════════════════════════════════════════════
+function renderHoldings(el){
+  el.innerHTML=`
+  <div class="stack">
+    <div class="view-selector">
+      <button class="view-btn active" onclick="switchHoldingsView(this,'pie',holdingsCharts)">Snapshot (Pie)</button>
+      <button class="view-btn"        onclick="switchHoldingsView(this,'area',holdingsCharts)">Over Time (Area)</button>
+    </div>
+    <div id="holdingsView"></div>
+  </div>`;
+
+  const holdingsCharts={pieId:makeId(), areaId:makeId()};
+  renderHoldingsPie(holdingsCharts);
+}
+
+function renderHoldingsPie(ids){
+  const view=document.getElementById('holdingsView');
+  view.innerHTML=`
+  <div class="stack">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Portfolio Composition — Dec 1, 2024</span></div>
+      <div id="${ids.pieId}" style="height:380px"></div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr>
+          <th onclick="sortTable(this,0)">Holding ↕</th>
+          <th onclick="sortTable(this,1)" class="num">Value ↕</th>
+          <th onclick="sortTable(this,2)" class="num">% of Portfolio ↕</th>
+          <th onclick="sortTable(this,3)" class="num">Shares ↕</th>
+          <th onclick="sortTable(this,4)" class="num">Avg Cost ↕</th>
+        </tr></thead>
+        <tbody>
+          ${HOLDINGS.map(h=>`
+          <tr onclick="navigate('stocks','${h.ticker}')">
+            <td><span class="ticker-dot" style="background:${h.color}"></span><span class="mono">${h.ticker}</span>  ${h.name}</td>
+            <td class="num">${fmt(h.value)}</td>
+            <td class="num">${h.pct.toFixed(2)}%</td>
+            <td class="num">${h.shares||'—'}</td>
+            <td class="num">${h.avgCost?fmt(h.avgCost):'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot><tr>
+          <td>Total</td>
+          <td class="num">${fmt(HOLDINGS.reduce((a,h)=>a+h.value,0))}</td>
+          <td class="num">100%</td><td></td><td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    const active=HOLDINGS.filter(h=>h.ticker!=='CASH');
+    const cash=HOLDINGS.find(h=>h.ticker==='CASH');
+    const allH=[...active,cash];
+    Plotly.newPlot(ids.pieId,[{
+      type:'pie',hole:0.55,
+      labels:allH.map(h=>h.name),
+      values:allH.map(h=>h.value),
+      marker:{colors:allH.map(h=>h.color)},
+      textinfo:'label+percent',
+      textposition:'outside',
+      hovertemplate:'<b>%{label}</b><br>%{value:$,.0f}<br>%{percent}<extra></extra>',
+      rotation:30,
+    }],{
+      paper_bgcolor:'#F7F8FA',
+      plot_bgcolor:'#F7F8FA',
+      margin:{l:40,r:40,t:20,b:20},
+      annotations:[{text:`<b>$${(58967/1000).toFixed(1)}K</b><br><span style="font-size:10px;color:#6B7280">Total Value</span>`,x:0.5,y:0.5,font:{size:16},showarrow:false,xref:'paper',yref:'paper'}],
+      showlegend:false,
+    },PLOTLY_CONFIG);
+  },50);
+}
+
+function renderHoldingsArea(ids){
+  const view=document.getElementById('holdingsView');
+  view.innerHTML=`
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Holdings Over Time</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="toggle-group">
+          <button class="toggle-btn active">$</button>
+          <button class="toggle-btn">%</button>
+        </div>
+      </div>
+    </div>
+    <div id="${ids.areaId}" style="min-height:380px"></div>
+  </div>`;
+
+  setTimeout(()=>{
+    const dates=HISTORY.dates;
+    const holdingsForChart=HOLDINGS.filter(h=>h.ticker!=='CASH');
+    // Build stacked area: distribute portfolio value by current percentages (mock)
+    const traces=holdingsForChart.map((h,i)=>({
+      x:dates,
+      y:dates.map((_,j)=>{
+        const portVal=HISTORY.values[j];
+        // ramp up each stock based on when it was "bought" (simplified)
+        const startIdx=Math.floor(j/dates.length*HISTORY.dates.length);
+        return Math.round(portVal*(h.pct/100)*(0.3+0.7*Math.min(1,(j-i*12)/dates.length*3)));
+      }),
+      name:h.name,
+      stackgroup:'one',
+      line:{color:h.color,width:1},
+      fillcolor:h.color+'99',
+      hovertemplate:'%{y:$,.0f}<extra>'+h.ticker+'</extra>',
+    }));
+    Plotly.newPlot(ids.areaId,traces,{
+      ...PLOTLY_LAYOUT_BASE,
+      margin:{l:65,r:16,t:8,b:40},
+      yaxis:{...Y_CURRENCY},
+      showlegend:true,
+      legend:{orientation:'h',x:0,y:-0.18,font:{size:11}},
+    },PLOTLY_CONFIG);
+  },50);
+}
+
+function switchHoldingsView(btn,view,ids){
+  btn.closest('.view-selector').querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(view==='pie') renderHoldingsPie(ids);
+  else renderHoldingsArea(ids);
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: PERFORMANCE
+// ═══════════════════════════════════════════════════
+function renderPerformance(el){
+  el.innerHTML=`
+  <div class="stack">
+    <!-- TOP 3-COL -->
+    <div class="grid-3">
+      <!-- Key Metrics -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Key Metrics</span></div>
+        ${[
+          ['TTWROR','+18.4%','pos'],['IRR','+14.2%','pos'],
+          ['Absolute Change','+$21,557','pos'],['Delta (since first trade)','+$21,557','pos'],
+          ['Last Day — Abs. Change','+$312','pos'],['Last Day — TTWROR','+0.53%','pos'],
+        ].map(([l,v,c])=>`
+        <div class="metric-row">
+          <span class="metric-label">${l}</span>
+          <span class="metric-value ${c}">${v}</span>
+        </div>`).join('')}
+      </div>
+      <!-- Risk Metrics -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Risk Metrics</span></div>
+        ${[
+          ['Maximum Drawdown','−23.4%','neg'],
+          ['Max Drawdown Duration','184 days',''],
+          ['Volatility (annualised)','18.2%',''],
+          ['Semi-deviation','12.8%',''],
+        ].map(([l,v,c])=>`
+        <div class="metric-row">
+          <span class="metric-label">${l}</span>
+          <span class="metric-value ${c}">${v}</span>
+        </div>`).join('')}
+      </div>
+      <!-- Calculation Summary -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Calculation Summary</span></div>
+        <table class="calc-table">
+          ${[
+            ['Start Value (Mar 2019)','$10,000',''],
+            ['+ Price Gains / Losses','$14,320','pos'],
+            ['+ Realised Gains','$4,780','pos'],
+            ['+ Earnings (div, premiums, int)','$9,876','pos'],
+            ['− Fees','−$469','neg'],
+            ['− Taxes','−$0',''],
+            ['+ Cash FX Gains','$0',''],
+            ['+ Deposits (perf-neutral)','$21,460',''],
+          ].map(([l,v,c])=>`<tr><td style="color:#6B7280;font-size:12px">${l}</td><td class="${c}">${v}</td></tr>`).join('')}
+          <tr class="total-row"><td style="font-size:13px"><b>= End Value (Dec 2024)</b></td><td><b>$58,967</b></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALL-TIME OVERVIEW DIVIDER -->
+    <div style="display:flex;align-items:center;gap:12px;margin:4px 0">
+      <span style="font-size:11px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap">All-Time Overview</span>
+      <div style="flex:1;height:1px;background:#E5E7EB"></div>
+    </div>
+
+    <!-- BOTTOM 3-COL -->
+    <div class="grid-3">
+      <!-- Monthly Earnings -->
+      <div class="card" style="overflow:auto">
+        <div class="card-header"><span class="card-title">Monthly Earnings</span></div>
+        ${renderMonthlyEarningsTable()}
+      </div>
+      <!-- Annual IRR -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">IRR by Year</span></div>
+        ${Object.entries(ANNUAL_IRR).map(([yr,irr])=>`
+        <div class="irr-row">
+          <span class="irr-year">${yr}</span>
+          <div class="irr-bar" style="background:${irr>1?'#D1FAE5':irr<-1?'#FEE2E2':'#F3F4F6'};color:${irr>1?'#065F46':irr<-1?'#991B1B':'#6B7280'}">
+            ${fmtPct(irr)}
+          </div>
+        </div>`).join('')}
+      </div>
+      <!-- Monthly IRR Heatmap -->
+      <div class="card" style="overflow:auto">
+        <div class="card-header"><span class="card-title">Monthly IRR</span></div>
+        ${renderMonthlyIRRTable()}
+        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10px;color:#6B7280;align-items:center">
+          <span style="background:#EF4444;color:#fff;padding:2px 6px;border-radius:3px">−5%</span>
+          <span style="flex:1;height:6px;margin:0 6px;background:linear-gradient(to right,#EF4444,#fff,#10B981);border-radius:3px"></span>
+          <span style="background:#10B981;color:#fff;padding:2px 6px;border-radius:3px">+5%</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderMonthlyEarningsTable(){
+  const months=['J','F','M','A','M','J','J','A','S','O','N','D'];
+  let html=`<table class="hm-table"><thead><tr><th class="yr">Yr</th>${months.map(m=>`<th>${m}</th>`).join('')}<th style="font-weight:700">Tot</th></tr></thead><tbody>`;
+  Object.entries(MONTHLY_EARNINGS).forEach(([yr,vals])=>{
+    const total=vals.reduce((a,b)=>a+b,0);
+    html+=`<tr><td class="yr" style="font-weight:500;font-size:11px;color:#374151">'${yr.slice(2)}</td>`;
+    vals.forEach(v=>{
+      const cls=v>80?'hm-strong-pos':v>30?'hm-pos':v>0?'hm-neu':'hm-empty';
+      html+=`<td><span class="hm-cell ${cls}">${v>0?(v>=1000?(v/1000).toFixed(1)+'k':v):'—'}</span></td>`;
+    });
+    html+=`<td><span class="hm-cell hm-pos" style="font-weight:700">${total}</span></td></tr>`;
+  });
+  html+=`</tbody></table>`;
+  return html;
+}
+
+function renderMonthlyIRRTable(){
+  const months=['J','F','M','A','M','J','J','A','S','O','N','D'];
+  let html=`<table class="hm-table"><thead><tr><th class="yr">Yr</th>${months.map(m=>`<th>${m}</th>`).join('')}</tr></thead><tbody>`;
+  Object.entries(MONTHLY_IRR).forEach(([yr,vals])=>{
+    html+=`<tr><td class="yr" style="font-weight:500;font-size:11px;color:#374151">'${yr.slice(2)}</td>`;
+    vals.forEach(v=>{
+      if(v===null){html+=`<td><span class="hm-cell hm-empty">—</span></td>`;return}
+      const cls=v>=5?'hm-strong-pos':v>=2?'hm-pos':v>=-2?'hm-neu':v>=-5?'hm-neg':'hm-strong-neg';
+      html+=`<td><span class="hm-cell ${cls}">${v>0?'+'+v.toFixed(1):v.toFixed(1)}</span></td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table>`;
+  return html;
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: EARNINGS
+// ═══════════════════════════════════════════════════
+function renderEarnings(el){
+  let activeView='byYear';
+  const chartId=makeId();
+
+  el.innerHTML=`
+  <div class="stack">
+    <div class="view-selector" id="earningsViewSel">
+      <button class="view-btn active"  onclick="switchEarningsView('byYear','${chartId}',this)">By Year</button>
+      <button class="view-btn"         onclick="switchEarningsView('byQuarter','${chartId}',this)">By Quarter</button>
+      <button class="view-btn"         onclick="switchEarningsView('quartersByYear','${chartId}',this)">Quarters by Year</button>
+      <button class="view-btn"         onclick="switchEarningsView('cumulative','${chartId}',this)">Cumulative by Year</button>
+      <button class="view-btn"         onclick="switchEarningsView('table','${chartId}',this)">Table</button>
+    </div>
+    <div id="earningsContent${chartId}"></div>
+  </div>`;
+
+  renderEarningsByYear(chartId);
+}
+
+window.switchEarningsView=function(view,chartId,btn){
+  btn.closest('#earningsViewSel').querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  switch(view){
+    case'byYear':         renderEarningsByYear(chartId); break;
+    case'byQuarter':      renderEarningsByQuarter(chartId); break;
+    case'quartersByYear': renderEarningsQuartersByYear(chartId); break;
+    case'cumulative':     renderEarningsCumulative(chartId); break;
+    case'table':          renderEarningsTable(chartId); break;
+  }
+};
+
+function earningsContent(chartId){return document.getElementById('earningsContent'+chartId)}
+
+function renderEarningsByYear(chartId){
+  const id2=makeId();
+  earningsContent(chartId).innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Earnings by Year</span></div><div id="${id2}" style="min-height:320px"></div></div>`;
+  setTimeout(()=>{
+    const years=Object.keys(EARNINGS_BY_YEAR);
+    const totals=years.map(y=>{const e=EARNINGS_BY_YEAR[y];return e.dividends+e.premiums+e.interest+e.gains});
+    Plotly.newPlot(id2,[{
+      type:'bar',x:years,y:totals,marker:{color:'#3B82F6'},
+      hovertemplate:'<b>%{x}</b><br>%{y:$,.0f}<extra></extra>',
+    }],{
+      ...PLOTLY_LAYOUT_BASE,
+      margin:{l:65,r:16,t:8,b:40},
+      yaxis:{...Y_CURRENCY,zeroline:true,zerolinecolor:'#E5E7EB'},
+      showlegend:false,shapes:[{type:'line',x0:2018.5,x1:2024.5,y0:0,y1:0,line:{color:'#E5E7EB',dash:'dot',width:1.5}}],
+    },PLOTLY_CONFIG);
+  },50);
+}
+
+function renderEarningsByQuarter(chartId){
+  const id2=makeId();
+  earningsContent(chartId).innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Earnings by Quarter</span></div><div id="${id2}" style="min-height:320px"></div></div>`;
+  setTimeout(()=>{
+    const labels=[],vals=[];
+    [2019,2020,2021,2022,2023,2024].forEach(y=>{
+      [1,2,3,4].forEach(q=>{
+        labels.push(`Q${q} ${y}`);
+        const e=EARNINGS_BY_YEAR[y];
+        const total=e.dividends+e.premiums+e.interest+e.gains;
+        // Simple distribution across quarters
+        const qfactor=[0.18,0.22,0.28,0.32][q-1];
+        vals.push(Math.round(total*qfactor*(0.8+Math.random()*0.4)));
+      });
+    });
+    Plotly.newPlot(id2,[{type:'bar',x:labels,y:vals,marker:{color:'#3B82F6'},hovertemplate:'<b>%{x}</b><br>%{y:$,.0f}<extra></extra>'}],
+      {...PLOTLY_LAYOUT_BASE,margin:{l:65,r:16,t:8,b:70},yaxis:{...Y_CURRENCY},xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,tickangle:-45},showlegend:false},PLOTLY_CONFIG);
+  },50);
+}
+
+function renderEarningsQuartersByYear(chartId){
+  const id2=makeId();
+  earningsContent(chartId).innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Quarters by Year — Seasonal Comparison</span></div><div id="${id2}" style="min-height:320px"></div></div>`;
+  setTimeout(()=>{
+    const years=[2019,2020,2021,2022,2023,2024];
+    const qFrac=[[0.18,0.22,0.28,0.32],[0.20,0.24,0.26,0.30],[0.22,0.23,0.27,0.28],[0.20,0.25,0.27,0.28],[0.22,0.24,0.26,0.28],[0.21,0.24,0.27,0.28]];
+    const traces=years.map((y,i)=>{
+      const e=EARNINGS_BY_YEAR[y];
+      const total=e.dividends+e.premiums+e.interest+e.gains;
+      return{type:'bar',name:String(y),x:['Q1','Q2','Q3','Q4'],y:qFrac[i].map(f=>Math.round(total*f)),marker:{color:COLORS[i]},hovertemplate:`<b>${y} %{x}</b><br>%{y:$,.0f}<extra></extra>`};
+    });
+    Plotly.newPlot(id2,traces,{...PLOTLY_LAYOUT_BASE,barmode:'group',margin:{l:65,r:16,t:8,b:40},yaxis:{...Y_CURRENCY},showlegend:true,legend:{orientation:'h',x:0,y:-0.2,font:{size:11}}},PLOTLY_CONFIG);
+  },50);
+}
+
+function renderEarningsCumulative(chartId){
+  const id2=makeId();
+  earningsContent(chartId).innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Cumulative Earnings by Year</span></div><div id="${id2}" style="min-height:320px"></div></div>`;
+  setTimeout(()=>{
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const years=[2019,2020,2021,2022,2023,2024];
+    const traces=years.map((y,i)=>{
+      const e=EARNINGS_BY_YEAR[y];
+      const total=e.dividends+e.premiums+e.interest+e.gains;
+      const monthly=MONTHLY_EARNINGS[y];
+      const cum=[]; let acc=0;
+      monthly.forEach(m=>{acc+=m;cum.push(acc)});
+      const endMonth=y===2024?11:11;
+      return{x:months.slice(0,endMonth+1),y:cum.slice(0,endMonth+1),name:String(y),line:{color:COLORS[i],width:2},mode:'lines',hovertemplate:`<b>${y} %{x}</b><br>%{y:$,.0f}<extra></extra>`};
+    });
+    Plotly.newPlot(id2,traces,{...PLOTLY_LAYOUT_BASE,margin:{l:65,r:16,t:8,b:40},yaxis:{...Y_CURRENCY},showlegend:true,legend:{orientation:'h',x:0,y:-0.2,font:{size:11}}},PLOTLY_CONFIG);
+  },50);
+}
+
+function renderEarningsTable(chartId){
+  const years=[2019,2020,2021,2022,2023,2024];
+  earningsContent(chartId).innerHTML=`
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr>
+        <th>Ticker</th><th>Name</th>
+        ${years.map(y=>`<th class="num">${y}</th>`).join('')}
+        <th class="num">Total</th>
+      </tr></thead>
+      <tbody>
+        ${STOCKS_WITH_DATA.map(s=>{
+          const total=years.reduce((a,y)=>a+(s[y]||0),0);
+          return`<tr onclick="navigate('stocks','${s.ticker}')">
+            <td><span class="ticker-dot" style="background:${s.dot}"></span><span class="mono">${s.ticker}</span></td>
+            <td>${s.name}</td>
+            ${years.map(y=>`<td class="num ${(s[y]||0)>0?'pos':(s[y]||0)<0?'neg':''}">${s[y]?fmt(s[y]):'—'}</td>`).join('')}
+            <td class="num bold ${total>0?'pos':'neg'}">${fmt(total)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td colspan="2">Total</td>
+        ${years.map(y=>{const t=STOCKS_WITH_DATA.reduce((a,s)=>a+(s[y]||0),0);return`<td class="num ${t>0?'pos':'neg'}">${fmt(t)}</td>`}).join('')}
+        <td class="num bold pos">${fmt(STOCKS_WITH_DATA.reduce((a,s)=>a+years.reduce((b,y)=>b+(s[y]||0),0),0))}</td>
+      </tr></tfoot>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: STOCKS LIST
+// ═══════════════════════════════════════════════════
+function renderStocksList(el){
+  const years=[2019,2020,2021,2022,2023,2024];
+  el.innerHTML=`
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr>
+        <th>Ticker</th><th>Name</th>
+        ${years.map(y=>`<th class="num sorted">${y}</th>`).join('')}
+        <th class="num">Total</th>
+      </tr></thead>
+      <tbody>
+        ${STOCKS_WITH_DATA.map(s=>{
+          const total=years.reduce((a,y)=>a+(s[y]||0),0);
+          return`<tr onclick="navigate('stocks','${s.ticker}')">
+            <td><span class="ticker-dot" style="background:${s.dot}"></span><span class="mono">${s.ticker}</span></td>
+            <td>${s.name}</td>
+            ${years.map(y=>`<td class="num ${(s[y]||0)>0?'pos':(s[y]||0)<0?'neg':''}">${s[y]?fmt(s[y]):'—'}</td>`).join('')}
+            <td class="num bold ${total>0?'pos':'neg'}">${fmt(total)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td colspan="2">Total</td>
+        ${years.map(y=>{const t=STOCKS_WITH_DATA.reduce((a,s)=>a+(s[y]||0),0);return`<td class="num ${t>0?'pos':'neg'}">${fmt(t)}</td>`}).join('')}
+        <td class="num bold pos">${fmt(STOCKS_WITH_DATA.reduce((a,s)=>a+years.reduce((b,y)=>b+(s[y]||0),0),0))}</td>
+      </tr></tfoot>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: STOCK DETAIL
+// ═══════════════════════════════════════════════════
+function renderStockDetail(el,ticker){
+  const h=HOLDINGS.find(x=>x.ticker===ticker);
+  const name=h?h.name:ticker;
+  const txs=TRANSACTIONS.filter(t=>t.ticker===ticker);
+  const stockData=STOCKS_WITH_DATA.find(s=>s.ticker===ticker)||{};
+  const years=[2019,2020,2021,2022,2023,2024];
+  const totalEarned=years.reduce((a,y)=>a+(stockData[y]||0),0);
+  const totalDiv=txs.filter(t=>t.type==='Dividend').reduce((a,t)=>a+t.amount,0);
+  const totalPrem=txs.filter(t=>t.type==='Option Premium').reduce((a,t)=>a+t.amount,0);
+  const totalInt=txs.filter(t=>t.type==='Interest').reduce((a,t)=>a+t.amount,0);
+  const totalGains=totalEarned-totalDiv-totalPrem-totalInt;
+  const ganttId=makeId(), earningsId=makeId();
+  const periods=STOCK_HOLDING_PERIODS[ticker.replace('.','_')]||[];
+
+  // Group transactions by year
+  const byYear={};
+  txs.forEach(t=>{if(!byYear[t.year])byYear[t.year]=[];byYear[t.year].push(t)});
+  const yearsSorted=Object.keys(byYear).sort((a,b)=>b-a);
+
+  el.innerHTML=`
+  <div class="stack">
+    <a class="back-link" onclick="navigate('stocks')">← All Stocks</a>
+
+    <!-- Charts row -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Ownership Timeline</span></div>
+        <div id="${ganttId}" style="min-height:200px"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Earnings Breakdown by Year</span></div>
+        <div id="${earningsId}" style="min-height:200px"></div>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid-5">
+      <div class="stat-card"><div class="stat-label">Total Earned</div><div class="stat-value sm ${totalEarned>0?'pos':'neg'}">${totalEarned>0?'+':''}${fmt(totalEarned)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Dividends</div><div class="stat-value sm pos">+${fmt(totalDiv)}</div></div>
+      <div class="stat-card"><div class="stat-label">Option Premiums</div><div class="stat-value sm pos">+${fmt(totalPrem)}</div></div>
+      <div class="stat-card"><div class="stat-label">Interest</div><div class="stat-value sm ${totalInt>0?'pos':'neg'}">${totalInt>0?'+':''}${fmt(totalInt)}</div></div>
+      <div class="stat-card"><div class="stat-label">Realised Gains</div><div class="stat-value sm ${totalGains>0?'pos':'neg'}">${totalGains>0?'+':''}${fmt(totalGains)}</div></div>
+    </div>
+
+    <!-- Transaction table -->
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr>
+          <th>Date</th><th>Type</th><th>Description</th>
+          <th class="num">Qty</th><th class="num">Price</th>
+          <th class="num">Amount</th><th class="num">Fees</th>
+        </tr></thead>
+        <tbody>
+          ${yearsSorted.map(yr=>{
+            const yTxs=byYear[yr];
+            const yTotal=yTxs.reduce((a,t)=>a+t.amount,0);
+            return`
+            <tr class="table-year-header" onclick="toggleYearGroup(this,'yg${yr}${earningsId}')">
+              <td colspan="6" style="color:#374151;font-size:12px">${yr}</td>
+              <td class="num ${yTotal>0?'pos':'neg'}">${fmt(yTotal)}</td>
+            </tr>
+            ${yTxs.map(t=>`
+            <tr class="yg${yr}${earningsId}">
+              <td style="white-space:nowrap;color:#6B7280">${formatDate(t.date)}</td>
+              <td><span class="badge badge-${t.type.toLowerCase().replace(/ /g,'').replace('premium','premium')}">${t.type}</span></td>
+              <td style="max-width:260px;font-size:12px">${t.desc}</td>
+              <td class="num">${t.qty!=null?t.qty:'—'}</td>
+              <td class="num">${t.price?fmt(t.price,2):'—'}</td>
+              <td class="num ${t.amount>0?'pos':'neg'}">${t.amount>0?'+':''}${fmt(t.amount,0)}</td>
+              <td class="num ${t.fees?'neg':''}">${t.fees?fmt(t.fees,2):'—'}</td>
+            </tr>`).join('')}`;
+          }).join('')}
+        </tbody>
+        <tfoot><tr>
+          <td colspan="5">Period Total</td>
+          <td class="num ${txs.reduce((a,t)=>a+t.amount,0)>0?'pos':'neg'}">${fmt(txs.reduce((a,t)=>a+t.amount,0))}</td>
+          <td class="num neg">−${fmt(txs.reduce((a,t)=>a+t.fees,0),2)}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div style="text-align:center;color:#9CA3AF;font-size:12px;padding:8px 0">No further transactions in the selected period.</div>
+  </div>`;
+
+  // Gantt chart
+  setTimeout(()=>{
+    if(periods.length===0){
+      document.getElementById(ganttId).innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:160px;color:#9CA3AF;font-size:13px">No holding periods in selected range</div>';
+    } else {
+      const today='2024-12-01';
+      const shapes=periods.map((p,i)=>({
+        type:'rect',x0:p.from,x1:p.to||today,y0:i-0.4,y1:i+0.4,
+        fillcolor:h?h.color+'BB':'#3B82F6BB',line:{width:0},
+      }));
+      const annotations=periods.map((p,i)=>({
+        x:p.from,y:i,text:` ${p.shares} sh @ ${fmt(p.avgCost,0)}`,showarrow:false,
+        xanchor:'left',font:{size:10,color:'#fff'},
+      }));
+      Plotly.newPlot(ganttId,[{x:[periods[0].from,'2024-12-01'],y:[0,periods.length-1],mode:'markers',marker:{opacity:0},hoverinfo:'skip'}],{
+        paper_bgcolor:'#F7F8FA',plot_bgcolor:'#F7F8FA',
+        margin:{l:10,r:10,t:10,b:30},shapes,annotations,
+        xaxis:{showgrid:false,color:'#9CA3AF',tickfont:{size:10}},
+        yaxis:{showgrid:false,showticklabels:false,zeroline:false},
+        showlegend:false,font:{family:'system-ui'},
+        height:160+periods.length*40,
+      },PLOTLY_CONFIG);
+    }
+
+    // Earnings bar chart
+    const earningsYears=years.filter(y=>stockData[y]);
+    if(earningsYears.length===0){
+      document.getElementById(earningsId).innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:200px;color:#9CA3AF;font-size:13px">No earnings data</div>';
+    } else {
+      Plotly.newPlot(earningsId,[
+        {type:'bar',name:'Dividends',   x:earningsYears,y:earningsYears.map(y=>Math.round((stockData[y]||0)*0.12)),marker:{color:'#8B5CF6'}},
+        {type:'bar',name:'Premiums',    x:earningsYears,y:earningsYears.map(y=>Math.round((stockData[y]||0)*0.25)),marker:{color:'#F59E0B'}},
+        {type:'bar',name:'Realised',    x:earningsYears,y:earningsYears.map(y=>Math.round((stockData[y]||0)*0.63)),marker:{color:'#10B981'}},
+      ],{
+        barmode:'stack',paper_bgcolor:'#F7F8FA',plot_bgcolor:'#F7F8FA',
+        margin:{l:55,r:10,t:10,b:35},
+        xaxis:{showgrid:false,color:'#9CA3AF',tickfont:{size:11}},
+        yaxis:{...Y_CURRENCY},
+        showlegend:true,legend:{orientation:'h',x:0,y:-0.25,font:{size:11}},
+        font:{family:'system-ui'},
+      },PLOTLY_CONFIG);
+    }
+  },50);
+}
+
+window.toggleYearGroup=function(headerRow,cls){
+  document.querySelectorAll('.'+cls).forEach(r=>{
+    r.style.display=r.style.display==='none'?'':'none';
+  });
+};
+
+function formatDate(d){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const [y,m,day]=d.split('-');
+  return`${months[+m-1]} ${+day}, ${y}`;
+}
+
+// Badge class helper
+function badgeClass(type){
+  const map={'Buy':'buy','Sell':'sell','Dividend':'dividend','Option Premium':'premium','Option Expiry':'expiry','Option Exercise':'exercise','Option Assignment':'assignment','Interest':'interest'};
+  return'badge-'+(map[type]||'expiry');
+}
+// Patch badge classes in transaction types
+document.addEventListener('click',()=>{});
+
+// ═══════════════════════════════════════════════════
+//  PAGE: COMPARISON
+// ═══════════════════════════════════════════════════
+function renderComparison(el){
+  el.innerHTML=`
+  <div class="stack">
+    <div class="placeholder-card">
+      <svg width="200" height="100" viewBox="0 0 200 100" style="opacity:.35">
+        <polyline points="0,80 40,60 80,30 120,50 160,20 200,35" fill="none" stroke="#9CA3AF" stroke-width="2.5"/>
+        <polyline points="0,70 40,75 80,65 120,40 160,55 200,45" fill="none" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="6,3"/>
+      </svg>
+      <div class="placeholder-title">Performance Comparison</div>
+      <p class="placeholder-text">Compare your portfolio's return against market benchmarks like the S&amp;P 500 or DAX, or against any individual stock. This feature requires historical price data for the selected benchmarks, which is not yet available.</p>
+      <p class="placeholder-text">In the meantime, you can explore your absolute performance on the <span class="blue-link" onclick="navigate('performance')">Performance page</span>.</p>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: IMPORT
+// ═══════════════════════════════════════════════════
+function renderImport(el){
+  el.innerHTML=`
+  <div class="card" style="max-width:680px">
+    <div class="sec-title">Automatic IBKR Flex Web Service</div>
+    <div class="sec-desc">Connect your Interactive Brokers account via the Flex Query API to automatically import transactions.</div>
+    <div class="form-group">
+      <label>IBKR Token</label>
+      <input class="form-input" type="text" placeholder="Your IBKR Flex token…">
+    </div>
+    <div class="form-group">
+      <label>Flex Query ID</label>
+      <input class="form-input" type="text" placeholder="e.g. 123456789">
+    </div>
+    <button class="btn-primary">Import Now</button>
+    <div class="status-box mt12">
+      <b>Last import:</b> Dec 1, 2024 at 08:42 AM — 247 transactions imported. No errors.
+    </div>
+
+    <hr class="divider">
+
+    <div class="sec-title">Manual XML Upload</div>
+    <div class="sec-desc">Upload an IBKR Flex XML export file to manually import your transaction history.</div>
+    <div class="upload-zone">
+      <div style="font-size:32px;color:#9CA3AF;margin-bottom:10px">↑</div>
+      <div style="font-weight:500;color:#374151;margin-bottom:4px">Drop your IBKR Flex XML file here or click to browse</div>
+      <div style="font-size:12px;color:#9CA3AF">Accepts .xml files only</div>
+    </div>
+    <div class="status-box mt12">
+      <b>Last upload:</b> Nov 15, 2024 at 03:12 PM — 38 transactions imported.
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGE: SETTINGS (stub)
+// ═══════════════════════════════════════════════════
+function renderSettings(el){
+  el.innerHTML=`
+  <div class="card" style="max-width:480px">
+    <div class="card-header"><span class="card-title">Settings</span></div>
+    <div class="form-group">
+      <label>Base Currency</label>
+      <select class="form-input" style="max-width:260px">
+        <option selected>USD — US Dollar</option>
+        <option>EUR — Euro</option>
+        <option>GBP — British Pound</option>
+        <option>CHF — Swiss Franc</option>
+        <option>CAD — Canadian Dollar</option>
+        <option>AUD — Australian Dollar</option>
+      </select>
+      <div style="font-size:12px;color:#9CA3AF;margin-top:5px">All values are displayed in this currency using IBKR's fx_rate_to_base conversion.</div>
+    </div>
+    <div style="height:1px;background:#E5E7EB;margin:16px 0"></div>
+    <div style="font-size:12px;color:#9CA3AF;line-height:1.6">
+      <b style="color:#6B7280">Date format:</b> MMM DD, YYYY &nbsp;·&nbsp; fixed<br>
+      <b style="color:#6B7280">Tax lots method:</b> FIFO &nbsp;·&nbsp; provided by IBKR
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn-primary">Save</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  SORT TABLE (basic)
+// ═══════════════════════════════════════════════════
+window.sortTable=function(th,colIdx){
+  const table=th.closest('table');
+  const tbody=table.querySelector('tbody');
+  const rows=Array.from(tbody.querySelectorAll('tr'));
+  const asc=th.dataset.sort!=='asc';
+  th.dataset.sort=asc?'asc':'desc';
+  table.querySelectorAll('th').forEach(t=>t.classList.remove('sorted'));
+  th.classList.add('sorted');
+  rows.sort((a,b)=>{
+    const av=a.cells[colIdx]?.textContent.replace(/[$,%+]/g,'').trim()||'';
+    const bv=b.cells[colIdx]?.textContent.replace(/[$,%+]/g,'').trim()||'';
+    const an=parseFloat(av),bn=parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn))return asc?an-bn:bn-an;
+    return asc?av.localeCompare(bv):bv.localeCompare(av);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+};
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+initDatePicker();
+render();
+// Lucide icons in sidebar (rendered once; nav is static HTML)
+if(typeof lucide!=='undefined') lucide.createIcons();
+</script>
+</body>
+</html>
