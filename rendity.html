@@ -344,7 +344,7 @@ const HISTORY = (function(){
       // add some noise
       const noise=(Math.sin(s*2.3+i*7)*0.015+Math.sin(s*0.7+i*3)*0.01);
       result.values.push(Math.round(v1+(v2-v1)*t*(1+noise)));
-      result.deposits.push(Math.round(dep1+(dep2-dep1)*t));
+      result.deposits.push(dep1); // step function: flat between deposit events
     }
   }
   result.dates.push('2024-12-01');
@@ -389,21 +389,30 @@ const TRANSACTIONS = [
 ];
 
 const EARNINGS_BY_YEAR = {
-  2019:{dividends:120,  premiums:0,    interest:18,  gains:0},
-  2020:{dividends:185,  premiums:210,  interest:24,  gains:-420},
-  2021:{dividends:312,  premiums:890,  interest:31,  gains:5200},
-  2022:{dividends:298,  premiums:1240, interest:148, gains:-1800},
-  2023:{dividends:420,  premiums:1680, interest:310, gains:3100},
-  2024:{dividends:512,  premiums:1920, interest:285, gains:6800},
+  2019:{dividends:220,  premiums:150,  interest:30,  gains:450},   // total:  850
+  2020:{dividends:280,  premiums:520,  interest:40,  gains:-2040}, // total: -1200
+  2021:{dividends:380,  premiums:1100, interest:55,  gains:6965},  // total:  8500
+  2022:{dividends:360,  premiums:1850, interest:220, gains:-3230}, // total:  -800
+  2023:{dividends:490,  premiums:2050, interest:390, gains:4270},  // total:  7200
+  2024:{dividends:590,  premiums:2300, interest:342, gains:3775},  // total:  7007
+};
+
+const EARNINGS_BY_QUARTER = {
+  2019:{Q1:0,    Q2:180,   Q3:325,   Q4:345},
+  2020:{Q1:120,  Q2:-1480, Q3:200,   Q4:-40},
+  2021:{Q1:1200, Q2:2300,  Q3:2100,  Q4:2900},
+  2022:{Q1:400,  Q2:-1800, Q3:-200,  Q4:800},
+  2023:{Q1:850,  Q2:1900,  Q3:2100,  Q4:2350},
+  2024:{Q1:1200, Q2:2050,  Q3:2250,  Q4:1507},
 };
 
 const MONTHLY_EARNINGS = {
-  2019:[0,0,15,22,18,20,14,0,18,10,0,3],
-  2020:[12,0,0,8,22,35,18,40,20,15,12,3],
-  2021:[28,18,34,45,52,38,72,58,46,52,44,75],
-  2022:[48,38,52,44,60,55,70,62,48,58,42,51],
-  2023:[62,54,78,58,72,80,92,68,75,82,60,88],
-  2024:[82,74,95,88,102,108,115,98,105,112,88,115],
+  2019:[  0,    0,    0,   60,   60,   60,  108,  108,  109,  115,  115,  115],
+  2020:[ 40,   40,   40, -500, -490, -490,   65,   65,   70,  -15,  -13,  -12],
+  2021:[400,  400,  400,  766,  767,  767,  700,  700,  700,  966,  967,  967],
+  2022:[133,  133,  134, -600, -600, -600,  -67,  -67,  -66,  266,  267,  267],
+  2023:[283,  283,  284,  633,  633,  634,  700,  700,  700,  783,  783,  784],
+  2024:[400,  400,  400,  683,  683,  684,  750,  750,  750,  502,  502,  503],
 };
 
 const MONTHLY_IRR = {
@@ -416,6 +425,8 @@ const MONTHLY_IRR = {
 };
 
 const ANNUAL_IRR = {2019:8.4,2020:-5.2,2021:32.1,2022:-18.4,2023:29.8,2024:22.4};
+// S&P 500 annual total return (approximate, for comparison)
+const SP500_ANNUAL = {2019:28.9,2020:16.3,2021:26.9,2022:-19.4,2023:24.2,2024:23.3};
 
 const STOCKS_WITH_DATA = [
   {ticker:'AMZN',name:'Amazon.com, Inc.',       2019:0,    2020:0,     2021:5200, 2022:-420,  2023:3280, 2024:7112, dot:COLORS[5]},
@@ -554,7 +565,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
 // ═══════════════════════════════════════════════════
 //  PLOTLY HELPERS
 // ═══════════════════════════════════════════════════
-const PLOTLY_CONFIG={responsive:true,displayModeBar:false};
+const PLOTLY_CONFIG={responsive:true,displayModeBar:false,scrollZoom:false};
 // Abbreviated currency Y-axis (shows $15.5K, $1.2M etc.)
 const Y_CURRENCY={tickprefix:'$',tickformat:',.2~s',color:'#9CA3AF',gridcolor:'#E5E7EB',zeroline:false,tickfont:{size:11}};
 const PLOTLY_LAYOUT_BASE={
@@ -562,9 +573,10 @@ const PLOTLY_LAYOUT_BASE={
   paper_bgcolor:'#F7F8FA',
   plot_bgcolor:'#F7F8FA',
   font:{family:'system-ui,-apple-system,sans-serif',size:11,color:'#6B7280'},
-  xaxis:{showgrid:false,zeroline:false,color:'#9CA3AF',tickfont:{size:11}},
-  yaxis:{gridcolor:'#E5E7EB',zeroline:false,color:'#9CA3AF',tickfont:{size:11}},
+  xaxis:{showgrid:false,zeroline:false,color:'#9CA3AF',tickfont:{size:11},fixedrange:true},
+  yaxis:{gridcolor:'#E5E7EB',zeroline:false,color:'#9CA3AF',tickfont:{size:11},fixedrange:true},
   hovermode:'x unified',
+  dragmode:false,
   legend:{orientation:'h',x:0,y:-0.18,font:{size:11}},
   showlegend:false,
 };
@@ -579,25 +591,38 @@ function renderDashboard(el){
   const totalPrem=Object.values(EARNINGS_BY_YEAR).reduce((a,v)=>a+v.premiums,0);
   const totalInt=Object.values(EARNINGS_BY_YEAR).reduce((a,v)=>a+v.interest,0);
   const totalGains=Object.values(EARNINGS_BY_YEAR).reduce((a,v)=>a+v.gains,0);
-  const chartId=makeId();
+  const chartId=makeId(), pieId=makeId();
 
   el.innerHTML=`
   <div class="stack">
-    <div class="grid-2">
+    <!-- 3 hero cards -->
+    <div class="grid-3">
       <div class="stat-card">
         <div class="stat-label">Total Balance</div>
         <div class="stat-value">${fmt(totalBalance)}</div>
         <div class="stat-secondary">as of Dec 1, 2024</div>
       </div>
-      <div class="stat-card clickable" onclick="navigate('history')">
-        <div class="stat-label">Total Earned</div>
-        <div class="stat-value pos">+${fmt(totalEarned)}</div>
-        <div class="stat-secondary pos">+${pct}% return</div>
-        <div class="stat-secondary">all time, since first transaction</div>
+      <div class="stat-card clickable" onclick="navigate('history')" style="overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div class="stat-label">Total Earned</div>
+            <div class="stat-value pos">+${fmt(totalEarned)}</div>
+            <div class="stat-secondary pos">+${pct}% return</div>
+            <div class="stat-secondary">all time, since first transaction</div>
+          </div>
+          <div id="${pieId}" style="width:90px;height:90px;flex-shrink:0"></div>
+        </div>
+        <span class="stat-chevron">›</span>
+      </div>
+      <div class="stat-card clickable" onclick="navigate('performance')">
+        <div class="stat-label">IRR (Annualised)</div>
+        <div class="stat-value pos">+14.2%</div>
+        <div class="stat-secondary">all time</div>
         <span class="stat-chevron">›</span>
       </div>
     </div>
 
+    <!-- Portfolio history chart -->
     <div class="card">
       <div class="card-header">
         <span class="card-title">Portfolio History (All Time)</span>
@@ -609,51 +634,39 @@ function renderDashboard(el){
         <span><span style="display:inline-block;width:24px;height:2px;background:#94A3B8;vertical-align:middle;border-radius:2px;margin-right:5px;border-top:1.5px dashed #94A3B8"></span>Net Deposits</span>
       </div>
     </div>
-
-    <div class="grid-5">
-      <div class="stat-card clickable" onclick="navigate('performance')">
-        <div class="stat-label">IRR (Annualised)</div>
-        <div class="stat-value sm pos">+14.2%</div>
-        <div class="stat-secondary">all time</div>
-        <span class="stat-chevron" style="font-size:14px">›</span>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Dividends Received</div>
-        <div class="stat-value sm pos">+${fmt(totalDiv)}</div>
-        <div class="stat-secondary">all time</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Option Premiums</div>
-        <div class="stat-value sm pos">+${fmt(totalPrem)}</div>
-        <div class="stat-secondary">all time</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Interest</div>
-        <div class="stat-value sm pos">+${fmt(totalInt)}</div>
-        <div class="stat-secondary">all time</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Realised Gains</div>
-        <div class="stat-value sm ${totalGains>0?'pos':'neg'}">${totalGains>0?'+':''}${fmt(totalGains)}</div>
-        <div class="stat-secondary">all time</div>
-      </div>
-    </div>
   </div>`;
 
-  // Plot portfolio history
+  // Plot mini earnings pie and portfolio history chart
   setTimeout(()=>{
+    // Mini donut in Total Earned card
+    const pieDiv=document.getElementById(pieId);
+    if(pieDiv){
+      Plotly.newPlot(pieId,[{
+        type:'pie',hole:0.5,
+        values:[totalDiv,totalPrem,totalInt,totalGains<0?0:totalGains],
+        labels:['Dividends','Option Premiums','Interest','Realised Gains'],
+        marker:{colors:['#8B5CF6','#F59E0B','#14B8A6','#10B981']},
+        textinfo:'none',
+        hovertemplate:'<b>%{label}</b><br>%{value:$,.0f} (%{percent})<extra></extra>',
+      }],{
+        paper_bgcolor:'transparent',plot_bgcolor:'transparent',
+        margin:{l:0,r:0,t:0,b:0},showlegend:false,
+        dragmode:false,
+      },{responsive:true,displayModeBar:false,scrollZoom:false});
+    }
+
+    // Portfolio history chart
     const d=HISTORY;
-    const earnings=d.values.map((v,i)=>v-d.deposits[i]);
     Plotly.newPlot(chartId,[
-      {x:d.dates,y:d.deposits,name:'Net Deposits',line:{color:'#94A3B8',dash:'dot',width:2},mode:'lines',fill:'none',hovertemplate:'%{y:$,.0f}<extra>Deposits</extra>'},
-      // fill between balance and deposits
+      {x:d.dates,y:d.deposits,name:'Net Deposits',line:{color:'#94A3B8',dash:'dot',width:2,shape:'hv'},mode:'lines',fill:'none',hovertemplate:'%{y:$,.0f}<extra>Net Deposits</extra>'},
       {x:d.dates,y:d.values,name:'Balance',line:{color:'#3B82F6',width:2.5},mode:'lines',fill:'tonexty',fillcolor:'rgba(16,185,129,0.12)',hovertemplate:'%{y:$,.0f}<extra>Balance</extra>'},
     ],{
       ...PLOTLY_LAYOUT_BASE,
       margin:{l:65,r:16,t:8,b:40},
       paper_bgcolor:'#F7F8FA',plot_bgcolor:'#F7F8FA',
-      yaxis:{...Y_CURRENCY},
-      hovermode:'x unified',showlegend:false
+      yaxis:{...Y_CURRENCY,fixedrange:true},
+      xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,fixedrange:true},
+      hovermode:'x unified',showlegend:false,
     },PLOTLY_CONFIG);
   },50);
 }
@@ -664,13 +677,13 @@ function renderDashboard(el){
 function renderHistory(el){
   const chartId=makeId();
   const seriesDef=[
-    {key:'value',  label:'Total Value',       color:'#3B82F6', dash:'solid',  active:true},
-    {key:'dep',    label:'Invested Capital',  color:'#6B7280', dash:'solid',  active:true},
-    {key:'earn',   label:'Cumulative Earnings',color:'#10B981',dash:'solid',  active:true},
-    {key:'gains',  label:'Price Gains',       color:'#10B981', dash:'dash',   active:false},
-    {key:'div',    label:'Dividends',         color:'#8B5CF6', dash:'dot',    active:false},
-    {key:'prem',   label:'Option Premiums',   color:'#F59E0B', dash:'dashdot',active:false},
-    {key:'int',    label:'Interest',          color:'#14B8A6', dash:'dot',    active:false},
+    {key:'value',  label:'Total Value',         color:'#3B82F6', dash:'solid',  shape:'linear', active:true},
+    {key:'dep',    label:'Net Deposits',         color:'#6B7280', dash:'solid',  shape:'hv',     active:true},
+    {key:'earn',   label:'Cumulative Earnings',  color:'#10B981', dash:'solid',  shape:'linear', active:true},
+    {key:'gains',  label:'Realised Gains',       color:'#10B981', dash:'dash',   shape:'linear', active:false},
+    {key:'div',    label:'Dividends',            color:'#8B5CF6', dash:'dot',    shape:'linear', active:false},
+    {key:'prem',   label:'Option Premiums',      color:'#F59E0B', dash:'dashdot',shape:'linear', active:false},
+    {key:'int',    label:'Interest',             color:'#14B8A6', dash:'dot',    shape:'linear', active:false},
   ];
 
   el.innerHTML=`
@@ -722,7 +735,7 @@ function renderHistoryChart(chartId,seriesDef){
   const traces=seriesDef.filter(s=>s.active).map(s=>({
     x:d.dates, y:seriesData[s.key],
     name:s.label,
-    line:{color:s.color,dash:s.dash,width:2},
+    line:{color:s.color,dash:s.dash,width:2,shape:s.shape||'linear'},
     mode:'lines',
     hovertemplate:'%{y:$,.0f}<extra>'+s.label+'</extra>',
   }));
@@ -742,7 +755,9 @@ function toggleResolution(btn,res){
 // ═══════════════════════════════════════════════════
 //  PAGE: HOLDINGS
 // ═══════════════════════════════════════════════════
+let holdingsCharts={};
 function renderHoldings(el){
+  holdingsCharts={pieId:makeId(), areaId:makeId()};
   el.innerHTML=`
   <div class="stack">
     <div class="view-selector">
@@ -752,7 +767,6 @@ function renderHoldings(el){
     <div id="holdingsView"></div>
   </div>`;
 
-  const holdingsCharts={pieId:makeId(), areaId:makeId()};
   renderHoldingsPie(holdingsCharts);
 }
 
@@ -815,7 +829,8 @@ function renderHoldingsPie(ids){
   },50);
 }
 
-function renderHoldingsArea(ids){
+function renderHoldingsArea(ids, mode){
+  mode = mode || '$';
   const view=document.getElementById('holdingsView');
   view.innerHTML=`
   <div class="card">
@@ -823,8 +838,8 @@ function renderHoldingsArea(ids){
       <span class="card-title">Holdings Over Time</span>
       <div style="display:flex;gap:8px;align-items:center">
         <div class="toggle-group">
-          <button class="toggle-btn active">$</button>
-          <button class="toggle-btn">%</button>
+          <button class="toggle-btn${mode==='$'?' active':''}" onclick="renderHoldingsArea(holdingsCharts,'$')">$</button>
+          <button class="toggle-btn${mode==='%'?' active':''}" onclick="renderHoldingsArea(holdingsCharts,'%')">%</button>
         </div>
       </div>
     </div>
@@ -833,28 +848,63 @@ function renderHoldingsArea(ids){
 
   setTimeout(()=>{
     const dates=HISTORY.dates;
-    const holdingsForChart=HOLDINGS.filter(h=>h.ticker!=='CASH');
-    // Build stacked area: distribute portfolio value by current percentages (mock)
-    const traces=holdingsForChart.map((h,i)=>({
-      x:dates,
-      y:dates.map((_,j)=>{
-        const portVal=HISTORY.values[j];
-        // ramp up each stock based on when it was "bought" (simplified)
-        const startIdx=Math.floor(j/dates.length*HISTORY.dates.length);
-        return Math.round(portVal*(h.pct/100)*(0.3+0.7*Math.min(1,(j-i*12)/dates.length*3)));
-      }),
-      name:h.name,
-      stackgroup:'one',
-      line:{color:h.color,width:1},
-      fillcolor:h.color+'99',
-      hovertemplate:'%{y:$,.0f}<extra>'+h.ticker+'</extra>',
-    }));
+    const n=dates.length;
+    const stockWeights=[
+      {ticker:'AAPL', color:HOLDINGS.find(h=>h.ticker==='AAPL').color,
+       w:dates.map((_,j)=>Math.min(0.20,0.10+0.10*(j/n)))},
+      {ticker:'META', color:HOLDINGS.find(h=>h.ticker==='META').color,
+       w:dates.map((_,j)=>{const t=j/n;return t<0.5?Math.max(0,t*0.30):Math.max(0,0.15-(t-0.5)*0.05+0.15*(t-0.5))})},
+      {ticker:'BRK.B',color:HOLDINGS.find(h=>h.ticker==='BRK.B').color,
+       w:dates.map((_,j)=>Math.min(0.25,0.08+0.17*(j/n)))},
+      {ticker:'MSFT', color:HOLDINGS.find(h=>h.ticker==='MSFT').color,
+       w:dates.map((_,j)=>Math.min(0.18,0.06+0.12*(j/n)))},
+      {ticker:'AMZN', color:HOLDINGS.find(h=>h.ticker==='AMZN').color,
+       w:dates.map((_,j)=>{const t=j/n;return t<0.1?t*0.5:t<0.25?Math.max(0,0.05-(t-0.1)*0.20):Math.min(0.06,0.01+(t-0.25)*0.07)})},
+      {ticker:'NVDA', color:HOLDINGS.find(h=>h.ticker==='NVDA').color,
+       w:dates.map((_,j)=>{const t=j/n;return t<0.75?0:Math.min(0.15,(t-0.75)*0.60)})},
+    ];
+
+    // Pre-compute raw $ values per date
+    const rawValues=stockWeights.map(s=>dates.map((d,j)=>HISTORY.values[j]*s.w[j]));
+
+    let traces, yaxis;
+    if(mode==='%'){
+      // Normalise each date column to 100%
+      const traces100=stockWeights.map((s,si)=>({
+        x:dates,
+        y:dates.map((d,j)=>{
+          const total=rawValues.reduce((sum,rv)=>sum+rv[j],0);
+          return total>0?Math.round((rawValues[si][j]/total)*1000)/10:0;
+        }),
+        name:s.ticker,
+        stackgroup:'one',
+        groupnorm:'percent',
+        line:{color:s.color,width:0.5},
+        fillcolor:s.color+'CC',
+        hovertemplate:'%{y:.1f}%<extra>'+s.ticker+'</extra>',
+      }));
+      traces=traces100;
+      yaxis={ticksuffix:'%',range:[0,100],fixedrange:true,gridcolor:'#1F2937',color:'#9CA3AF',tickfont:{size:11}};
+    } else {
+      traces=stockWeights.map((s,si)=>({
+        x:dates,
+        y:rawValues[si].map(v=>Math.round(v)),
+        name:s.ticker,
+        stackgroup:'one',
+        line:{color:s.color,width:0.5},
+        fillcolor:s.color+'CC',
+        hovertemplate:'%{y:$,.0f}<extra>'+s.ticker+'</extra>',
+      }));
+      yaxis={...Y_CURRENCY,fixedrange:true};
+    }
+
     Plotly.newPlot(ids.areaId,traces,{
       ...PLOTLY_LAYOUT_BASE,
-      margin:{l:65,r:16,t:8,b:40},
-      yaxis:{...Y_CURRENCY},
+      margin:{l:65,r:16,t:8,b:56},
+      yaxis,
+      xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,fixedrange:true},
       showlegend:true,
-      legend:{orientation:'h',x:0,y:-0.18,font:{size:11}},
+      legend:{orientation:'h',x:0,y:-0.22,font:{size:11}},
     },PLOTLY_CONFIG);
   },50);
 }
@@ -872,8 +922,8 @@ function switchHoldingsView(btn,view,ids){
 function renderPerformance(el){
   el.innerHTML=`
   <div class="stack">
-    <!-- TOP 3-COL -->
-    <div class="grid-3">
+    <!-- TOP 2-COL (Risk Metrics removed) -->
+    <div class="grid-2">
       <!-- Key Metrics -->
       <div class="card">
         <div class="card-header"><span class="card-title">Key Metrics</span></div>
@@ -887,33 +937,19 @@ function renderPerformance(el){
           <span class="metric-value ${c}">${v}</span>
         </div>`).join('')}
       </div>
-      <!-- Risk Metrics -->
-      <div class="card">
-        <div class="card-header"><span class="card-title">Risk Metrics</span></div>
-        ${[
-          ['Maximum Drawdown','−23.4%','neg'],
-          ['Max Drawdown Duration','184 days',''],
-          ['Volatility (annualised)','18.2%',''],
-          ['Semi-deviation','12.8%',''],
-        ].map(([l,v,c])=>`
-        <div class="metric-row">
-          <span class="metric-label">${l}</span>
-          <span class="metric-value ${c}">${v}</span>
-        </div>`).join('')}
-      </div>
       <!-- Calculation Summary -->
       <div class="card">
         <div class="card-header"><span class="card-title">Calculation Summary</span></div>
         <table class="calc-table">
           ${[
             ['Start Value (Mar 2019)','$10,000',''],
-            ['+ Price Gains / Losses','$14,320','pos'],
+            ['+ Unrealised Gains / Losses','$14,320','pos'],
             ['+ Realised Gains','$4,780','pos'],
-            ['+ Earnings (div, premiums, int)','$9,876','pos'],
+            ['+ Earnings (dividends, premiums, interest)','$9,876','pos'],
             ['− Fees','−$469','neg'],
             ['− Taxes','−$0',''],
             ['+ Cash FX Gains','$0',''],
-            ['+ Deposits (perf-neutral)','$21,460',''],
+            ['+ Net Deposits (perf-neutral)','$21,460',''],
           ].map(([l,v,c])=>`<tr><td style="color:#6B7280;font-size:12px">${l}</td><td class="${c}">${v}</td></tr>`).join('')}
           <tr class="total-row"><td style="font-size:13px"><b>= End Value (Dec 2024)</b></td><td><b>$58,967</b></td></tr>
         </table>
@@ -936,13 +972,30 @@ function renderPerformance(el){
       <!-- Annual IRR -->
       <div class="card">
         <div class="card-header"><span class="card-title">IRR by Year</span></div>
-        ${Object.entries(ANNUAL_IRR).map(([yr,irr])=>`
-        <div class="irr-row">
-          <span class="irr-year">${yr}</span>
-          <div class="irr-bar" style="background:${irr>1?'#D1FAE5':irr<-1?'#FEE2E2':'#F3F4F6'};color:${irr>1?'#065F46':irr<-1?'#991B1B':'#6B7280'}">
-            ${fmtPct(irr)}
+        <div style="display:grid;grid-template-columns:40px 1fr 1fr;gap:4px 8px;font-size:11px;color:#9CA3AF;margin-bottom:4px;padding:0 2px">
+          <span></span><span style="text-align:right;font-weight:600">Portfolio</span><span style="text-align:right;font-weight:600">S&amp;P 500</span>
+        </div>
+        ${Object.entries(ANNUAL_IRR).map(([yr,irr])=>{
+          const sp=SP500_ANNUAL[yr]||0;
+          return`<div style="display:grid;grid-template-columns:40px 1fr 1fr;gap:4px 8px;margin-bottom:3px;align-items:center">
+            <span class="irr-year">${yr}</span>
+            <div class="irr-bar" style="background:${irr>1?'#D1FAE5':irr<-1?'#FEE2E2':'#F3F4F6'};color:${irr>1?'#065F46':irr<-1?'#991B1B':'#6B7280'}">${fmtPct(irr)}</div>
+            <div class="irr-bar" style="background:${sp>1?'#DBEAFE':sp<-1?'#FEE2E2':'#F3F4F6'};color:${sp>1?'#1D4ED8':sp<-1?'#991B1B':'#6B7280'}">${fmtPct(sp)}</div>
+          </div>`;
+        }).join('')}
+        <!-- Summary row: CAGR and overall gain -->
+        <div style="margin-top:10px;border-top:1px solid #E5E7EB;padding-top:8px">
+          <div style="display:grid;grid-template-columns:40px 1fr 1fr;gap:4px 8px;margin-bottom:3px;align-items:center">
+            <span style="font-size:10px;color:#9CA3AF;line-height:1.2">CAGR<br>6yr</span>
+            <div class="irr-bar" style="background:#D1FAE5;color:#065F46;font-weight:700">+14.2%</div>
+            <div class="irr-bar" style="background:#DBEAFE;color:#1D4ED8;font-weight:700">+15.6%</div>
           </div>
-        </div>`).join('')}
+          <div style="display:grid;grid-template-columns:40px 1fr 1fr;gap:4px 8px;align-items:center">
+            <span style="font-size:10px;color:#9CA3AF;line-height:1.2">Total<br>gain</span>
+            <div class="irr-bar" style="background:#D1FAE5;color:#065F46;font-weight:700">+121.6%</div>
+            <div class="irr-bar" style="background:#DBEAFE;color:#1D4ED8;font-weight:700">+138.4%</div>
+          </div>
+        </div>
       </div>
       <!-- Monthly IRR Heatmap -->
       <div class="card" style="overflow:auto">
@@ -965,10 +1018,20 @@ function renderMonthlyEarningsTable(){
     const total=vals.reduce((a,b)=>a+b,0);
     html+=`<tr><td class="yr" style="font-weight:500;font-size:11px;color:#374151">'${yr.slice(2)}</td>`;
     vals.forEach(v=>{
-      const cls=v>80?'hm-strong-pos':v>30?'hm-pos':v>0?'hm-neu':'hm-empty';
-      html+=`<td><span class="hm-cell ${cls}">${v>0?(v>=1000?(v/1000).toFixed(1)+'k':v):'—'}</span></td>`;
+      const abs=Math.abs(v);
+      let cls;
+      if(v>=800)cls='hm-strong-pos';
+      else if(v>=200)cls='hm-pos';
+      else if(v>0)cls='hm-neu';
+      else if(v===0)cls='hm-empty';
+      else if(v>=-100)cls='hm-neg';
+      else cls='hm-strong-neg';
+      const label=v===0?'—':(abs>=1000?(v<0?'−':'')+( abs/1000).toFixed(1)+'k':v);
+      html+=`<td><span class="hm-cell ${cls}">${label}</span></td>`;
     });
-    html+=`<td><span class="hm-cell hm-pos" style="font-weight:700">${total}</span></td></tr>`;
+    const totCls=total>=0?'hm-pos':'hm-neg';
+    const totLabel=Math.abs(total)>=1000?(total<0?'−':'')+(Math.abs(total)/1000).toFixed(1)+'k':total;
+    html+=`<td><span class="hm-cell ${totCls}" style="font-weight:700">${totLabel}</span></td></tr>`;
   });
   html+=`</tbody></table>`;
   return html;
@@ -1004,7 +1067,6 @@ function renderEarnings(el){
       <button class="view-btn"         onclick="switchEarningsView('byQuarter','${chartId}',this)">By Quarter</button>
       <button class="view-btn"         onclick="switchEarningsView('quartersByYear','${chartId}',this)">Quarters by Year</button>
       <button class="view-btn"         onclick="switchEarningsView('cumulative','${chartId}',this)">Cumulative by Year</button>
-      <button class="view-btn"         onclick="switchEarningsView('table','${chartId}',this)">Table</button>
     </div>
     <div id="earningsContent${chartId}"></div>
   </div>`;
@@ -1020,7 +1082,6 @@ window.switchEarningsView=function(view,chartId,btn){
     case'byQuarter':      renderEarningsByQuarter(chartId); break;
     case'quartersByYear': renderEarningsQuartersByYear(chartId); break;
     case'cumulative':     renderEarningsCumulative(chartId); break;
-    case'table':          renderEarningsTable(chartId); break;
   }
 };
 
@@ -1032,35 +1093,44 @@ function renderEarningsByYear(chartId){
   setTimeout(()=>{
     const years=Object.keys(EARNINGS_BY_YEAR);
     const totals=years.map(y=>{const e=EARNINGS_BY_YEAR[y];return e.dividends+e.premiums+e.interest+e.gains});
+    const barColors=totals.map(v=>v>=0?'#3B82F6':'#EF4444');
     Plotly.newPlot(id2,[{
-      type:'bar',x:years,y:totals,marker:{color:'#3B82F6'},
+      type:'bar',x:years,y:totals,marker:{color:barColors},
       hovertemplate:'<b>%{x}</b><br>%{y:$,.0f}<extra></extra>',
     }],{
       ...PLOTLY_LAYOUT_BASE,
       margin:{l:65,r:16,t:8,b:40},
-      yaxis:{...Y_CURRENCY,zeroline:true,zerolinecolor:'#E5E7EB'},
-      showlegend:false,shapes:[{type:'line',x0:2018.5,x1:2024.5,y0:0,y1:0,line:{color:'#E5E7EB',dash:'dot',width:1.5}}],
+      yaxis:{...Y_CURRENCY,zeroline:true,zerolinecolor:'#9CA3AF'},
+      showlegend:false,
     },PLOTLY_CONFIG);
   },50);
 }
 
 function renderEarningsByQuarter(chartId){
   const id2=makeId();
-  earningsContent(chartId).innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Earnings by Quarter</span></div><div id="${id2}" style="min-height:320px"></div></div>`;
+  earningsContent(chartId).innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Earnings by Quarter</span></div><div id="${id2}" style="min-height:340px"></div></div>`;
   setTimeout(()=>{
-    const labels=[],vals=[];
+    const labels=[],vals=[],colors=[],tickvals=[],ticktext=[];
     [2019,2020,2021,2022,2023,2024].forEach(y=>{
-      [1,2,3,4].forEach(q=>{
-        labels.push(`Q${q} ${y}`);
-        const e=EARNINGS_BY_YEAR[y];
-        const total=e.dividends+e.premiums+e.interest+e.gains;
-        // Simple distribution across quarters
-        const qfactor=[0.18,0.22,0.28,0.32][q-1];
-        vals.push(Math.round(total*qfactor*(0.8+Math.random()*0.4)));
+      ['Q1','Q2','Q3','Q4'].forEach((q,qi)=>{
+        const lbl=`${q} ${y}`;
+        labels.push(lbl);
+        const v=EARNINGS_BY_QUARTER[y][q];
+        vals.push(v);
+        colors.push(v>=0?'#3B82F6':'#EF4444');
+        tickvals.push(lbl);
+        // Q1: show "Q1 '19" style; Q2-Q4: show just the quarter
+        ticktext.push(qi===0?`Q1 '${String(y).slice(2)}`:q);
       });
     });
-    Plotly.newPlot(id2,[{type:'bar',x:labels,y:vals,marker:{color:'#3B82F6'},hovertemplate:'<b>%{x}</b><br>%{y:$,.0f}<extra></extra>'}],
-      {...PLOTLY_LAYOUT_BASE,margin:{l:65,r:16,t:8,b:70},yaxis:{...Y_CURRENCY},xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,tickangle:-45},showlegend:false},PLOTLY_CONFIG);
+    Plotly.newPlot(id2,[{type:'bar',x:labels,y:vals,marker:{color:colors},hovertemplate:'<b>%{x}</b><br>%{y:$,.0f}<extra></extra>'}],{
+      ...PLOTLY_LAYOUT_BASE,
+      hovermode:'closest',
+      margin:{l:65,r:16,t:8,b:56},
+      yaxis:{...Y_CURRENCY,zeroline:true,zerolinecolor:'#9CA3AF'},
+      xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,type:'category',tickangle:0,tickvals,ticktext},
+      showlegend:false,
+    },PLOTLY_CONFIG);
   },50);
 }
 
@@ -1069,13 +1139,21 @@ function renderEarningsQuartersByYear(chartId){
   earningsContent(chartId).innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Quarters by Year — Seasonal Comparison</span></div><div id="${id2}" style="min-height:320px"></div></div>`;
   setTimeout(()=>{
     const years=[2019,2020,2021,2022,2023,2024];
-    const qFrac=[[0.18,0.22,0.28,0.32],[0.20,0.24,0.26,0.30],[0.22,0.23,0.27,0.28],[0.20,0.25,0.27,0.28],[0.22,0.24,0.26,0.28],[0.21,0.24,0.27,0.28]];
     const traces=years.map((y,i)=>{
-      const e=EARNINGS_BY_YEAR[y];
-      const total=e.dividends+e.premiums+e.interest+e.gains;
-      return{type:'bar',name:String(y),x:['Q1','Q2','Q3','Q4'],y:qFrac[i].map(f=>Math.round(total*f)),marker:{color:COLORS[i]},hovertemplate:`<b>${y} %{x}</b><br>%{y:$,.0f}<extra></extra>`};
+      const q=EARNINGS_BY_QUARTER[y];
+      return{type:'bar',name:String(y),x:['Q1','Q2','Q3','Q4'],y:[q.Q1,q.Q2,q.Q3,q.Q4],marker:{color:COLORS[i]},hovertemplate:`<b>${y} %{x}</b><br>%{y:$,.0f}<extra></extra>`};
     });
-    Plotly.newPlot(id2,traces,{...PLOTLY_LAYOUT_BASE,barmode:'group',margin:{l:65,r:16,t:8,b:40},yaxis:{...Y_CURRENCY},showlegend:true,legend:{orientation:'h',x:0,y:-0.2,font:{size:11}}},PLOTLY_CONFIG);
+    Plotly.newPlot(id2,traces,{
+      ...PLOTLY_LAYOUT_BASE,
+      hovermode:'closest',
+      barmode:'group',
+      bargroupgap:0.25,
+      margin:{l:65,r:16,t:8,b:56},
+      yaxis:{...Y_CURRENCY,zeroline:true,zerolinecolor:'#9CA3AF'},
+      xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,type:'category'},
+      showlegend:true,
+      legend:{orientation:'h',x:0,y:-0.22,font:{size:11}},
+    },PLOTLY_CONFIG);
   },50);
 }
 
@@ -1094,39 +1172,18 @@ function renderEarningsCumulative(chartId){
       const endMonth=y===2024?11:11;
       return{x:months.slice(0,endMonth+1),y:cum.slice(0,endMonth+1),name:String(y),line:{color:COLORS[i],width:2},mode:'lines',hovertemplate:`<b>${y} %{x}</b><br>%{y:$,.0f}<extra></extra>`};
     });
-    Plotly.newPlot(id2,traces,{...PLOTLY_LAYOUT_BASE,margin:{l:65,r:16,t:8,b:40},yaxis:{...Y_CURRENCY},showlegend:true,legend:{orientation:'h',x:0,y:-0.2,font:{size:11}}},PLOTLY_CONFIG);
+    Plotly.newPlot(id2,traces,{
+      ...PLOTLY_LAYOUT_BASE,
+      hovermode:'closest',
+      margin:{l:65,r:16,t:8,b:56},
+      yaxis:{...Y_CURRENCY,zeroline:true,zerolinecolor:'#9CA3AF'},
+      xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,type:'category'},
+      showlegend:true,
+      legend:{orientation:'h',x:0,y:-0.22,font:{size:11}},
+    },PLOTLY_CONFIG);
   },50);
 }
 
-function renderEarningsTable(chartId){
-  const years=[2019,2020,2021,2022,2023,2024];
-  earningsContent(chartId).innerHTML=`
-  <div class="table-wrap">
-    <table class="data-table">
-      <thead><tr>
-        <th>Ticker</th><th>Name</th>
-        ${years.map(y=>`<th class="num">${y}</th>`).join('')}
-        <th class="num">Total</th>
-      </tr></thead>
-      <tbody>
-        ${STOCKS_WITH_DATA.map(s=>{
-          const total=years.reduce((a,y)=>a+(s[y]||0),0);
-          return`<tr onclick="navigate('stocks','${s.ticker}')">
-            <td><span class="ticker-dot" style="background:${s.dot}"></span><span class="mono">${s.ticker}</span></td>
-            <td>${s.name}</td>
-            ${years.map(y=>`<td class="num ${(s[y]||0)>0?'pos':(s[y]||0)<0?'neg':''}">${s[y]?fmt(s[y]):'—'}</td>`).join('')}
-            <td class="num bold ${total>0?'pos':'neg'}">${fmt(total)}</td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-      <tfoot><tr>
-        <td colspan="2">Total</td>
-        ${years.map(y=>{const t=STOCKS_WITH_DATA.reduce((a,s)=>a+(s[y]||0),0);return`<td class="num ${t>0?'pos':'neg'}">${fmt(t)}</td>`}).join('')}
-        <td class="num bold pos">${fmt(STOCKS_WITH_DATA.reduce((a,s)=>a+years.reduce((b,y)=>b+(s[y]||0),0),0))}</td>
-      </tr></tfoot>
-    </table>
-  </div>`;
-}
 
 // ═══════════════════════════════════════════════════
 //  PAGE: STOCKS LIST
@@ -1175,7 +1232,7 @@ function renderStockDetail(el,ticker){
   const totalPrem=txs.filter(t=>t.type==='Option Premium').reduce((a,t)=>a+t.amount,0);
   const totalInt=txs.filter(t=>t.type==='Interest').reduce((a,t)=>a+t.amount,0);
   const totalGains=totalEarned-totalDiv-totalPrem-totalInt;
-  const ganttId=makeId(), earningsId=makeId();
+  const sharesId=makeId(), earningsId=makeId(), priceId=makeId();
   const periods=STOCK_HOLDING_PERIODS[ticker.replace('.','_')]||[];
 
   // Group transactions by year
@@ -1190,8 +1247,8 @@ function renderStockDetail(el,ticker){
     <!-- Charts row -->
     <div class="grid-2">
       <div class="card">
-        <div class="card-header"><span class="card-title">Ownership Timeline</span></div>
-        <div id="${ganttId}" style="min-height:200px"></div>
+        <div class="card-header"><span class="card-title">Shares Held Over Time</span></div>
+        <div id="${sharesId}" style="min-height:200px"></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title">Earnings Breakdown by Year</span></div>
@@ -1206,6 +1263,12 @@ function renderStockDetail(el,ticker){
       <div class="stat-card"><div class="stat-label">Option Premiums</div><div class="stat-value sm pos">+${fmt(totalPrem)}</div></div>
       <div class="stat-card"><div class="stat-label">Interest</div><div class="stat-value sm ${totalInt>0?'pos':'neg'}">${totalInt>0?'+':''}${fmt(totalInt)}</div></div>
       <div class="stat-card"><div class="stat-label">Realised Gains</div><div class="stat-value sm ${totalGains>0?'pos':'neg'}">${totalGains>0?'+':''}${fmt(totalGains)}</div></div>
+    </div>
+
+    <!-- Price history chart -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Price History with Transactions</span></div>
+      <div id="${priceId}" style="min-height:260px"></div>
     </div>
 
     <!-- Transaction table -->
@@ -1247,31 +1310,88 @@ function renderStockDetail(el,ticker){
     <div style="text-align:center;color:#9CA3AF;font-size:12px;padding:8px 0">No further transactions in the selected period.</div>
   </div>`;
 
-  // Gantt chart
   setTimeout(()=>{
+    // ── Shares held area chart (step function over time) ──
     if(periods.length===0){
-      document.getElementById(ganttId).innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:160px;color:#9CA3AF;font-size:13px">No holding periods in selected range</div>';
+      document.getElementById(sharesId).innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:160px;color:#9CA3AF;font-size:13px">No holding periods in selected range</div>';
     } else {
       const today='2024-12-01';
-      const shapes=periods.map((p,i)=>({
-        type:'rect',x0:p.from,x1:p.to||today,y0:i-0.4,y1:i+0.4,
-        fillcolor:h?h.color+'BB':'#3B82F6BB',line:{width:0},
-      }));
-      const annotations=periods.map((p,i)=>({
-        x:p.from,y:i,text:` ${p.shares} sh @ ${fmt(p.avgCost,0)}`,showarrow:false,
-        xanchor:'left',font:{size:10,color:'#fff'},
-      }));
-      Plotly.newPlot(ganttId,[{x:[periods[0].from,'2024-12-01'],y:[0,periods.length-1],mode:'markers',marker:{opacity:0},hoverinfo:'skip'}],{
-        paper_bgcolor:'#F7F8FA',plot_bgcolor:'#F7F8FA',
-        margin:{l:10,r:10,t:10,b:30},shapes,annotations,
-        xaxis:{showgrid:false,color:'#9CA3AF',tickfont:{size:10}},
-        yaxis:{showgrid:false,showticklabels:false,zeroline:false},
-        showlegend:false,font:{family:'system-ui'},
-        height:160+periods.length*40,
+      // Build step-function from holding periods
+      const events=[];
+      periods.forEach(p=>{
+        events.push({date:p.from,shares:p.shares});
+        if(p.to) events.push({date:p.to,shares:-p.shares});
+      });
+      events.sort((a,b)=>a.date.localeCompare(b.date));
+      const sDates=['2019-01-01'], sShares=[0];
+      let running=0;
+      events.forEach(e=>{
+        sDates.push(e.date); sShares.push(running);          // flat to event
+        running=Math.max(0,running+e.shares);
+        sDates.push(e.date); sShares.push(running);          // jump
+      });
+      sDates.push(today); sShares.push(running);
+      const barColor=h?h.color:'#3B82F6';
+      Plotly.newPlot(sharesId,[{
+        x:sDates, y:sShares, type:'scatter', fill:'tozeroy',
+        line:{color:barColor,width:2,shape:'hv'},
+        fillcolor:barColor+'33',
+        hovertemplate:'<b>%{x}</b><br>%{y} shares<extra></extra>',
+        mode:'lines',
+      }],{
+        ...PLOTLY_LAYOUT_BASE,
+        margin:{l:45,r:10,t:10,b:30},
+        yaxis:{...PLOTLY_LAYOUT_BASE.yaxis,title:{text:'Shares',font:{size:10}},fixedrange:true},
+        xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,fixedrange:true},
+        showlegend:false,
       },PLOTLY_CONFIG);
     }
 
-    // Earnings bar chart
+    // ── Price history chart with transaction event overlays ──
+    // Generate synthetic price data based on ticker
+    const priceStart={'AMZN':1750,'AAPL':47,'META':165,'MSFT':100,'BRK.B':200,'NVDA':35};
+    const startPrice=priceStart[ticker]||100;
+    const histDates=HISTORY.dates;
+    const priceNoise=(i)=>1+Math.sin(i*0.4)*0.08+Math.sin(i*1.1)*0.04+Math.cos(i*0.15)*0.06;
+    const prices=histDates.map((d,i)=>{
+      const growth=Math.pow(1+0.20/52,i); // ~20% annual growth base
+      return Math.round(startPrice*growth*priceNoise(i)*100)/100;
+    });
+    // Transaction events as vertical shapes + custom hover points
+    const buySell=txs.filter(t=>['Buy','Sell','Option Premium','Option Exercise','Option Assignment'].includes(t.type));
+    const shapes=buySell.map(t=>({
+      type:'line',x0:t.date,x1:t.date,y0:0,y1:1,yref:'paper',
+      line:{color:t.type==='Buy'?'#3B82F6':t.type==='Sell'?'#F59E0B':'#8B5CF6',width:1.5,dash:'dot'},
+    }));
+    const eventTrace={
+      x:buySell.map(t=>t.date),
+      y:buySell.map(t=>{
+        const idx=histDates.findIndex(d=>d>=t.date);
+        return idx>=0?prices[idx]:startPrice;
+      }),
+      mode:'markers',
+      marker:{
+        color:buySell.map(t=>t.type==='Buy'?'#3B82F6':t.type==='Sell'?'#F59E0B':'#8B5CF6'),
+        size:8,symbol:'circle',line:{color:'#fff',width:1.5},
+      },
+      hovertemplate:'<b>%{text}</b><extra></extra>',
+      text:buySell.map(t=>t.desc),
+      showlegend:false,
+    };
+    Plotly.newPlot(priceId,[
+      {x:histDates,y:prices,type:'scatter',mode:'lines',line:{color:'#374151',width:1.5},hovertemplate:'<b>%{x}</b><br>$%{y:,.2f}<extra>Price</extra>',showlegend:false},
+      eventTrace,
+    ],{
+      ...PLOTLY_LAYOUT_BASE,
+      shapes,
+      margin:{l:65,r:16,t:10,b:40},
+      yaxis:{...Y_CURRENCY,fixedrange:true},
+      xaxis:{...PLOTLY_LAYOUT_BASE.xaxis,fixedrange:true},
+      hovermode:'closest',
+      showlegend:false,
+    },PLOTLY_CONFIG);
+
+    // ── Earnings bar chart ──
     const earningsYears=years.filter(y=>stockData[y]);
     if(earningsYears.length===0){
       document.getElementById(earningsId).innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:200px;color:#9CA3AF;font-size:13px">No earnings data</div>';
@@ -1279,14 +1399,15 @@ function renderStockDetail(el,ticker){
       Plotly.newPlot(earningsId,[
         {type:'bar',name:'Dividends',   x:earningsYears,y:earningsYears.map(y=>Math.round((stockData[y]||0)*0.12)),marker:{color:'#8B5CF6'}},
         {type:'bar',name:'Premiums',    x:earningsYears,y:earningsYears.map(y=>Math.round((stockData[y]||0)*0.25)),marker:{color:'#F59E0B'}},
-        {type:'bar',name:'Realised',    x:earningsYears,y:earningsYears.map(y=>Math.round((stockData[y]||0)*0.63)),marker:{color:'#10B981'}},
+        {type:'bar',name:'Realised Gains',x:earningsYears,y:earningsYears.map(y=>Math.round((stockData[y]||0)*0.63)),marker:{color:'#10B981'}},
       ],{
         barmode:'stack',paper_bgcolor:'#F7F8FA',plot_bgcolor:'#F7F8FA',
         margin:{l:55,r:10,t:10,b:35},
-        xaxis:{showgrid:false,color:'#9CA3AF',tickfont:{size:11}},
-        yaxis:{...Y_CURRENCY},
+        xaxis:{showgrid:false,color:'#9CA3AF',tickfont:{size:11},fixedrange:true},
+        yaxis:{...Y_CURRENCY,fixedrange:true},
         showlegend:true,legend:{orientation:'h',x:0,y:-0.25,font:{size:11}},
         font:{family:'system-ui'},
+        dragmode:false,
       },PLOTLY_CONFIG);
     }
   },50);
