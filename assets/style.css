@@ -862,3 +862,10 @@ body {
         transform: scale(1, 1)
     }
 }
+
+.trigger-item .site-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    margin: 0 auto;
+}
